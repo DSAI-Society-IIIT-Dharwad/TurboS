@@ -1,0 +1,842 @@
+'use client'
+
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { format } from 'date-fns/format'
+
+// ─── ECG Line SVG ──────────────────────────────────────────────────────────────
+function ECGLine({ color = '#22d3ee', width = 300, opacity = 0.6 }: { color?: string; width?: number; opacity?: number }) {
+  const id = `ecg-${color.replace('#', '')}-${width}`
+  return (
+    <svg width={width} height="50" viewBox={`0 0 ${width} 50`} style={{ overflow: 'visible' }}>
+      <defs>
+        <filter id={`${id}-glow`}>
+          <feGaussianBlur stdDeviation="1.5" result="blur" />
+          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+        <linearGradient id={`${id}-grad`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor={color} stopOpacity="0" />
+          <stop offset="30%" stopColor={color} stopOpacity="1" />
+          <stop offset="70%" stopColor={color} stopOpacity="1" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <polyline
+        points={`0,25 20,25 30,25 38,8 44,42 50,25 58,25 70,25 80,25 88,4 92,46 96,25 106,25 140,25 150,25 158,10 164,40 170,25 178,25 ${width},25`}
+        fill="none"
+        stroke={`url(#${id}-grad)`}
+        strokeWidth="1.5"
+        filter={`url(#${id}-glow)`}
+        opacity={opacity}
+        style={{ animation: `ecgDraw 4s linear infinite` }}
+      />
+    </svg>
+  )
+}
+
+// ─── DNA Helix SVG ─────────────────────────────────────────────────────────────
+function DNAHelix({ color1 = '#22d3ee', color2 = '#818cf8', count = 20, height = 320 }: { color1?: string; color2?: string; count?: number; height?: number }) {
+  const spacing = height / count
+  return (
+    <svg width="60" height={height} viewBox={`0 0 60 ${height}`} style={{ overflow: 'visible' }}>
+      <defs>
+        <filter id={`dna-glow-${color1.replace('#', '')}`}>
+          <feGaussianBlur stdDeviation="1.8" result="blur" />
+          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+      </defs>
+      {Array.from({ length: count }, (_, i) => {
+        const y = i * spacing + spacing / 2
+        const x1 = 30 + Math.sin(i * 0.65) * 22
+        const x2 = 30 - Math.sin(i * 0.65) * 22
+        const alpha = Math.abs(Math.sin(i * 0.65))
+        return (
+          <g key={i}>
+            <line x1={x1} y1={y} x2={x2} y2={y} stroke={`rgba(255,255,255,${alpha * 0.06})`} strokeWidth="1" />
+            <circle cx={x1} cy={y} r="3.5" fill={color1}
+              filter={`url(#dna-glow-${color1.replace('#', '')})`}
+              opacity={0.5 + alpha * 0.4}
+              style={{ animation: `dnaBlink 3s ease-in-out infinite`, animationDelay: `${i * 0.12}s` }} />
+            <circle cx={x2} cy={y} r="3.5" fill={color2}
+              filter={`url(#dna-glow-${color1.replace('#', '')})`}
+              opacity={0.5 + (1 - alpha) * 0.4}
+              style={{ animation: `dnaBlink 3s ease-in-out infinite`, animationDelay: `${i * 0.12 + 1.5}s` }} />
+          </g>
+        )
+      })}
+    </svg>
+  )
+}
+
+// ─── Candlestick Chart (Finance) ───────────────────────────────────────────────
+function CandlestickChart({ color = '#34d399', width = 280, opacity = 0.5 }: { color?: string; width?: number; opacity?: number }) {
+  const candles = [
+    { x: 20, open: 60, close: 40, high: 35, low: 70 },
+    { x: 50, open: 42, close: 30, high: 25, low: 48 },
+    { x: 80, open: 32, close: 50, high: 28, low: 55 },
+    { x: 110, open: 48, close: 35, high: 30, low: 52 },
+    { x: 140, open: 37, close: 22, high: 18, low: 42 },
+    { x: 170, open: 24, close: 38, high: 20, low: 45 },
+    { x: 200, open: 36, close: 20, high: 15, low: 40 },
+    { x: 230, open: 22, close: 15, high: 10, low: 28 },
+    { x: 260, open: 17, close: 28, high: 12, low: 32 },
+  ]
+  const id = `candle-${color.replace('#', '')}`
+  return (
+    <svg width={width} height="80" viewBox={`0 0 ${width} 80`} style={{ overflow: 'visible' }}>
+      <defs>
+        <filter id={`${id}-glow`}>
+          <feGaussianBlur stdDeviation="1.5" result="blur" />
+          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+        <linearGradient id={`${id}-fade`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor={color} stopOpacity="0" />
+          <stop offset="20%" stopColor={color} stopOpacity="1" />
+          <stop offset="80%" stopColor={color} stopOpacity="1" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      {candles.map((c, i) => {
+        const isBull = c.close < c.open
+        const candleColor = isBull ? color : '#f87171'
+        return (
+          <g key={i} opacity={opacity} filter={`url(#${id}-glow)`}
+            style={{ animation: `candleRise 0.6s ease both`, animationDelay: `${i * 0.08}s` }}>
+            <line x1={c.x} y1={c.high} x2={c.x} y2={c.low} stroke={candleColor} strokeWidth="1.2" opacity="0.7" />
+            <rect x={c.x - 5} y={Math.min(c.open, c.close)} width="10"
+              height={Math.max(Math.abs(c.open - c.close), 2)}
+              fill={candleColor} rx="1.5" opacity="0.85" />
+          </g>
+        )
+      })}
+      {/* Trend line */}
+      <polyline
+        points={candles.map(c => `${c.x},${(c.open + c.close) / 2}`).join(' ')}
+        fill="none" stroke={`url(#${id}-fade)`} strokeWidth="1"
+        strokeDasharray="4 3" opacity="0.4"
+      />
+    </svg>
+  )
+}
+
+// ─── Stock Ticker Line ─────────────────────────────────────────────────────────
+function StockLine({ color = '#34d399', width = 280 }: { color?: string; width?: number }) {
+  const points = [0, 30, 22, 45, 18, 38, 55, 25, 42, 15, 35, 28, 48, 20, 38, 52, 30, 44, 22, 35].map((v, i) => `${i * (width / 19)},${v}`)
+  const id = `stock-${color.replace('#', '')}`
+  return (
+    <svg width={width} height="60" viewBox={`0 0 ${width} 60`} style={{ overflow: 'visible' }}>
+      <defs>
+        <linearGradient id={`${id}-g`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.4" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+        <linearGradient id={`${id}-l`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor={color} stopOpacity="0" />
+          <stop offset="20%" stopColor={color} stopOpacity="1" />
+          <stop offset="80%" stopColor={color} stopOpacity="1" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <polygon points={`0,60 ${points.join(' ')} ${width},60`} fill={`url(#${id}-g)`} />
+      <polyline points={points.join(' ')} fill="none" stroke={`url(#${id}-l)`} strokeWidth="1.8" />
+    </svg>
+  )
+}
+
+// ─── Floating Orb ──────────────────────────────────────────────────────────────
+function FloatingOrb({ x, y, size, color, delay, duration }: { x: string; y: string; size: number; color: string; delay: string; duration: string }) {
+  return (
+    <div style={{
+      position: 'absolute', left: x, top: y, width: size, height: size, borderRadius: '50%',
+      background: `radial-gradient(circle at 35% 35%, ${color}35, ${color}08, transparent 68%)`,
+      border: `1px solid ${color}12`,
+      animation: `orbFloat ${duration} ease-in-out infinite`, animationDelay: delay,
+      pointerEvents: 'none',
+      boxShadow: `0 0 ${size / 2.5}px ${color}10, inset 0 0 ${size / 3}px ${color}06`,
+    }} />
+  )
+}
+
+// ─── Background Scene ──────────────────────────────────────────────────────────
+function BackgroundScene({ isHC }: { isHC: boolean }) {
+  const accent = isHC ? '#22d3ee' : '#34d399'
+  const accentRgb = isHC ? '34,211,238' : '52,211,153'
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+      {/* Base gradient */}
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, #020408 0%, #030609 50%, #020408 100%)' }} />
+
+      {/* Dot grid */}
+      <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,.038) 1px,transparent 1px)', backgroundSize: '28px 28px' }} />
+
+      {/* Scanlines */}
+      <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.01) 2px,rgba(0,0,0,.01) 4px)', pointerEvents: 'none' }} />
+
+      {/* Vignette */}
+      <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at center,transparent 28%,rgba(0,0,0,.72) 100%)' }} />
+
+      {/* Ambient blobs */}
+      <div style={{ position: 'absolute', width: 800, height: 800, borderRadius: '50%', filter: 'blur(200px)', opacity: .065, background: `radial-gradient(circle,${accent},transparent 70%)`, top: -300, left: -250, animation: 'blobDrift 20s ease-in-out infinite' }} />
+      <div style={{ position: 'absolute', width: 650, height: 650, borderRadius: '50%', filter: 'blur(180px)', opacity: .05, background: 'radial-gradient(circle,#818cf8,transparent 70%)', bottom: -250, right: -200, animation: 'blobDrift 25s ease-in-out infinite reverse' }} />
+      <div style={{ position: 'absolute', width: 450, height: 450, borderRadius: '50%', filter: 'blur(160px)', opacity: .04, background: 'radial-gradient(circle,#f59e0b,transparent 70%)', top: '40%', right: '10%', animation: 'blobDrift 30s ease-in-out infinite 8s' }} />
+
+      {/* Floating orbs */}
+      <FloatingOrb x="6%" y="18%" size={70} color={accent} delay="0s" duration="9s" />
+      <FloatingOrb x="84%" y="14%" size={55} color="#818cf8" delay="-3s" duration="11s" />
+      <FloatingOrb x="10%" y="68%" size={48} color="#34d399" delay="-6s" duration="8s" />
+      <FloatingOrb x="82%" y="62%" size={42} color="#f59e0b" delay="-2s" duration="10s" />
+      <FloatingOrb x="50%" y="85%" size={38} color={accent} delay="-4s" duration="7.5s" />
+
+      {/* Perspective floor grid */}
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 260, backgroundImage: `linear-gradient(rgba(${accentRgb},.028) 1px,transparent 1px),linear-gradient(90deg,rgba(${accentRgb},.028) 1px,transparent 1px)`, backgroundSize: '55px 55px', transform: 'perspective(500px) rotateX(68deg)', transformOrigin: 'bottom', maskImage: 'linear-gradient(to top,rgba(0,0,0,.5),transparent)' }} />
+
+      {/* LEFT SIDE — DNA Helix */}
+      <div style={{ position: 'absolute', left: 14, top: '8%', opacity: .12, animation: 'floatSlow 14s ease-in-out infinite' }}>
+        <DNAHelix color1={accent} color2="#818cf8" count={22} height={350} />
+      </div>
+
+      {/* RIGHT SIDE — depends on domain */}
+      {isHC ? (
+        /* Healthcare: second DNA */
+        <div style={{ position: 'absolute', right: 14, top: '30%', opacity: .09, animation: 'floatSlow 16s ease-in-out infinite', animationDelay: '-7s' }}>
+          <DNAHelix color1="#34d399" color2="#f59e0b" count={16} height={260} />
+        </div>
+      ) : (
+        /* Finance: Candlestick chart */
+        <div style={{ position: 'absolute', right: 20, top: '28%', opacity: .12, animation: 'floatSlow 12s ease-in-out infinite', animationDelay: '-4s' }}>
+          <CandlestickChart color="#34d399" width={180} opacity={0.7} />
+        </div>
+      )}
+
+      {/* ECG lines — healthcare gets more */}
+      {isHC ? (
+        <>
+          <div style={{ position: 'absolute', top: '22%', left: '50%', transform: 'translateX(-50%)', opacity: .11 }}>
+            <ECGLine color={accent} width={320} opacity={0.9} />
+          </div>
+          <div style={{ position: 'absolute', bottom: '28%', left: '8%', opacity: .08, transform: 'rotate(-2deg)' }}>
+            <ECGLine color="#818cf8" width={200} opacity={0.8} />
+          </div>
+          <div style={{ position: 'absolute', top: '62%', right: '6%', opacity: .07, transform: 'rotate(1.5deg)' }}>
+            <ECGLine color="#34d399" width={180} opacity={0.7} />
+          </div>
+        </>
+      ) : (
+        /* Finance gets stock lines */
+        <>
+          <div style={{ position: 'absolute', top: '20%', left: '50%', transform: 'translateX(-50%)', opacity: .1 }}>
+            <StockLine color={accent} width={300} />
+          </div>
+          <div style={{ position: 'absolute', bottom: '30%', left: '6%', opacity: .08 }}>
+            <StockLine color="#818cf8" width={180} />
+          </div>
+          <div style={{ position: 'absolute', top: '58%', right: '4%', opacity: .08 }}>
+            <CandlestickChart color="#f59e0b" width={160} opacity={0.6} />
+          </div>
+        </>
+      )}
+
+      {/* Rising particles */}
+      {[...Array(14)].map((_, i) => (
+        <div key={i} style={{
+          position: 'absolute', width: i % 3 === 0 ? 3 : 2, height: i % 3 === 0 ? 3 : 2, borderRadius: '50%',
+          background: [accent, '#818cf8', '#34d399', '#f59e0b', '#a78bfa'][i % 5],
+          left: `${5 + i * 6.5}%`, bottom: 0,
+          animation: `particleRise ${11 + i * 2.5}s linear infinite`,
+          animationDelay: `${i * 1.3}s`, opacity: 0,
+        }} />
+      ))}
+    </div>
+  )
+}
+
+// ─── Input Field ───────────────────────────────────────────────────────────────
+function InputField({
+  label, placeholder, value, onChange, onKeyDown, type = 'text',
+  icon, focused, onFocus, onBlur, accentRgb, accent, required = false, maxLength,
+}: {
+  label: string; placeholder: string; value: string;
+  onChange: (v: string) => void; onKeyDown?: (e: React.KeyboardEvent) => void;
+  type?: string; icon: React.ReactNode; focused: boolean;
+  onFocus: () => void; onBlur: () => void;
+  accentRgb: string; accent: string; required?: boolean; maxLength?: number;
+}) {
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 9 }}>
+        <div style={{ width: 4, height: 4, borderRadius: '50%', background: focused ? accent : '#334155', boxShadow: focused ? `0 0 6px ${accent}` : 'none', transition: 'background .3s, box-shadow .3s' }} />
+        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '.61rem', color: '#475569', letterSpacing: '.11em', textTransform: 'uppercase' }}>
+          {label}{required && <span style={{ color: accent, marginLeft: 2 }}>*</span>}
+        </span>
+      </div>
+      <div style={{ position: 'relative' }}>
+        <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', zIndex: 2, color: focused ? accent : '#334155', transition: 'color .3s' }}>
+          {icon}
+        </div>
+        <input
+          type={type}
+          placeholder={placeholder}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          onKeyDown={onKeyDown}
+          onFocus={onFocus}
+          onBlur={onBlur}
+          maxLength={maxLength}
+          style={{
+            width: '100%',
+            border: `1px solid ${focused ? `rgba(${accentRgb},.28)` : 'rgba(255,255,255,.062)'}`,
+            borderRadius: 13, padding: '13px 16px 13px 44px',
+            color: '#f8fafc', fontSize: '.88rem', fontFamily: 'Outfit, sans-serif',
+            outline: 'none', transition: 'border-color .3s, box-shadow .3s, background .3s',
+            boxShadow: focused ? `0 0 0 4px rgba(${accentRgb},.055), 0 0 18px rgba(${accentRgb},.04)` : 'none',
+            background: focused ? 'rgba(3,6,15,.96)' : 'rgba(3,6,15,.88)',
+          }}
+        />
+      </div>
+    </div>
+  )
+}
+
+// ─── Select Field ──────────────────────────────────────────────────────────────
+function SelectField({
+  label, value, onChange, onFocus, onBlur, focused, accent, accentRgb, icon, options,
+}: {
+  label: string; value: string; onChange: (v: string) => void;
+  onFocus: () => void; onBlur: () => void; focused: boolean;
+  accent: string; accentRgb: string; icon: React.ReactNode;
+  options: { value: string; label: string }[];
+}) {
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 9 }}>
+        <div style={{ width: 4, height: 4, borderRadius: '50%', background: focused ? accent : '#334155', boxShadow: focused ? `0 0 6px ${accent}` : 'none', transition: 'background .3s, box-shadow .3s' }} />
+        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '.61rem', color: '#475569', letterSpacing: '.11em', textTransform: 'uppercase' }}>{label}</span>
+      </div>
+      <div style={{ position: 'relative' }}>
+        <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', zIndex: 2, color: focused ? accent : '#334155', transition: 'color .3s' }}>
+          {icon}
+        </div>
+        <div style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', zIndex: 2 }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#334155" strokeWidth="2.5" strokeLinecap="round"><polyline points="6 9 12 15 18 9" /></svg>
+        </div>
+        <select
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          onFocus={onFocus}
+          onBlur={onBlur}
+          style={{
+            width: '100%', background: 'rgba(3,6,15,.88)',
+            border: `1px solid ${focused ? `rgba(${accentRgb},.28)` : 'rgba(255,255,255,.062)'}`,
+            borderRadius: 13, padding: '13px 40px 13px 44px',
+            color: value ? '#f8fafc' : '#1e2a38', fontSize: '.88rem',
+            fontFamily: 'Outfit, sans-serif', outline: 'none', appearance: 'none', cursor: 'pointer',
+            transition: 'border-color .3s, box-shadow .3s',
+            boxShadow: focused ? `0 0 0 4px rgba(${accentRgb},.055)` : 'none',
+          }}
+        >
+          {options.map(o => <option key={o.value} value={o.value} style={{ background: '#080c18', color: o.value ? '#f8fafc' : '#475569' }}>{o.label}</option>)}
+        </select>
+      </div>
+    </div>
+  )
+}
+
+// ─── Static Card ──────────────────────────────────────────────────────────────
+function StaticCard({ children, accentRgb, accent2Rgb, style = {} }: {
+  children: React.ReactNode; accentRgb: string; accent2Rgb?: string; style?: React.CSSProperties
+}) {
+  return (
+    <div style={{
+      position: 'relative', overflow: 'hidden', borderRadius: 24,
+      background: 'linear-gradient(165deg, rgba(8,12,24,.97), rgba(3,6,15,.99))',
+      border: '1px solid rgba(255,255,255,.055)',
+      backdropFilter: 'blur(36px)',
+      boxShadow: '0 0 0 1px rgba(255,255,255,.02), 14px 14px 44px rgba(0,0,0,.7), -3px -3px 12px rgba(255,255,255,.014), inset 0 1px 0 rgba(255,255,255,.055)',
+      ...style,
+    }}>
+      {/* Top accent line */}
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg,transparent,rgba(${accentRgb},.55),rgba(${accent2Rgb ?? accentRgb},.28),transparent)`, zIndex: 5 }} />
+      {/* Bottom accent line */}
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg,transparent 5%,rgba(${accentRgb},.26) 35%,rgba(${accentRgb},.12) 65%,transparent 95%)`, borderRadius: '0 0 24px 24px' }} />
+      {/* Grid pattern */}
+      <div style={{ position: 'absolute', inset: 0, opacity: .02, backgroundImage: `linear-gradient(rgba(${accentRgb},1) 1px,transparent 1px),linear-gradient(90deg,rgba(${accentRgb},1) 1px,transparent 1px)`, backgroundSize: '34px 34px', borderRadius: 24, pointerEvents: 'none' }} />
+      {/* Scan line */}
+      <div style={{ position: 'absolute', left: 0, right: 0, height: 1, background: `linear-gradient(90deg,transparent,rgba(${accentRgb},.1),transparent)`, animation: 'scanLine 8s linear infinite', pointerEvents: 'none', zIndex: 6 }} />
+      {/* Corner glows */}
+      <div style={{ position: 'absolute', top: -40, right: -40, width: 140, height: 140, background: `radial-gradient(circle,rgba(${accentRgb},.08),transparent 65%)`, borderRadius: '50%', pointerEvents: 'none', filter: 'blur(20px)' }} />
+      <div style={{ position: 'absolute', bottom: -25, left: -25, width: 90, height: 90, background: `radial-gradient(circle,rgba(${accentRgb},.05),transparent 65%)`, borderRadius: '50%', pointerEvents: 'none', filter: 'blur(14px)' }} />
+      {children}
+    </div>
+  )
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
+export default function PersonLookupPage() {
+  const router = useRouter()
+  const params = useSearchParams()
+  const domain = params.get('domain')
+
+  const [phone, setPhone] = useState('')
+  const [person, setPerson] = useState<any>(null)
+  const [notFound, setNotFound] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [showNewForm, setShowNewForm] = useState(false)
+  const [newPerson, setNewPerson] = useState({ name: '', email: '', age: '', gender: '' })
+  const [focusedField, setFocusedField] = useState<string | null>(null)
+  const [sessionLoading, setSessionLoading] = useState(false)
+  const [createLoading, setCreateLoading] = useState(false)
+
+  const isHC = domain === 'HEALTHCARE'
+  const accent = isHC ? '#22d3ee' : '#34d399'
+  const accentRgb = isHC ? '34,211,238' : '52,211,153'
+  const accent2 = isHC ? '#818cf8' : '#f59e0b'
+  const accent2Rgb = isHC ? '129,140,248' : '245,158,11'
+
+  const searchPerson = async () => {
+    if (!phone || phone.length < 10) return
+    setLoading(true); setNotFound(false); setPerson(null); setShowNewForm(false)
+    try {
+      const res = await fetch(`/api/person/${phone}`)
+      if (res.ok) {
+        const data = await res.json()
+        if (data.exists) { setPerson(data.person); setShowNewForm(false) }
+        else { setNotFound(true); setShowNewForm(true) }
+      } else { setNotFound(true); setShowNewForm(true) }
+    } catch { setNotFound(true) }
+    finally { setLoading(false) }
+  }
+
+  const createPerson = async () => {
+    if (!newPerson.name) return
+    setCreateLoading(true)
+    try {
+      const res = await fetch('/api/person/create', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...newPerson, phone })
+      })
+      if (res.ok) { const p = await res.json(); setPerson(p); setShowNewForm(false); setNotFound(false) }
+    } catch (e) { console.error(e) }
+    finally { setCreateLoading(false) }
+  }
+
+  const startSession = async () => {
+    setSessionLoading(true)
+    try {
+      const res = await fetch('/api/session/create', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ personId: person.id, domain, language: 'ENGLISH' })
+      })
+      if (res.ok) { const s = await res.json(); router.push(`/session/${s.id}`) }
+    } catch (e) { console.error(e) }
+    finally { setSessionLoading(false) }
+  }
+
+  const f = (field: string) => ({
+    focused: focusedField === field,
+    onFocus: () => setFocusedField(field),
+    onBlur: () => setFocusedField(null),
+  })
+
+  return (
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+        body{font-family:'Outfit',sans-serif;background:#020408;color:#cbd5e1;overflow-x:hidden;}
+        ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:#000}::-webkit-scrollbar-thumb{background:rgba(${accentRgb},.18);border-radius:2px}
+
+        @keyframes blobDrift{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(25px,-42px) scale(1.06)}}
+        @keyframes orbFloat{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-28px) rotate(180deg)}}
+        @keyframes floatSlow{0%,100%{transform:translateY(0)}50%{transform:translateY(-18px)}}
+        @keyframes dnaBlink{0%,100%{opacity:.65}50%{opacity:1}}
+        @keyframes ecgDraw{0%{stroke-dashoffset:600}100%{stroke-dashoffset:0}}
+        @keyframes candleRise{from{opacity:0;transform:scaleY(0)}to{opacity:1;transform:scaleY(1)}}
+        @keyframes scanLine{0%{top:-2%;opacity:0}5%{opacity:1}95%{opacity:1}100%{top:102%;opacity:0}}
+        @keyframes particleRise{0%{transform:translateY(0) translateX(0);opacity:0}10%{opacity:.65}90%{opacity:.3}100%{transform:translateY(-520px) translateX(55px);opacity:0}}
+        @keyframes shimmer{0%{left:-100%}100%{left:250%}}
+        @keyframes gradShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+        @keyframes blink{0%,100%{opacity:1}50%{opacity:.18}}
+        @keyframes spinRing{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        @keyframes fadeSlide{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+        @keyframes slideRight{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+        @keyframes progressFill{from{width:0}to{width:var(--target-width)}}
+
+        .pl-fade{animation:fadeSlide .5s cubic-bezier(.23,1,.32,1) both;}
+        .pl-d1{animation-delay:.05s}.pl-d2{animation-delay:.12s}.pl-d3{animation-delay:.19s}.pl-d4{animation-delay:.26s}.pl-d5{animation-delay:.33s}
+
+        .pl-holo{
+          display:inline-flex;align-items:center;gap:6px;
+          padding:5px 13px;border-radius:100px;
+          font-family:'JetBrains Mono',monospace;font-size:.6rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+          position:relative;overflow:hidden;
+        }
+        .pl-holo::after{content:'';position:absolute;top:0;left:-100%;width:40%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);animation:shimmer 4.5s ease-in-out infinite;}
+
+        .pl-sec-label{display:inline-flex;align-items:center;gap:8px;font-size:.59rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;font-family:'JetBrains Mono',monospace;}
+        .pl-sec-label::before{content:'';width:16px;height:1px;background:linear-gradient(90deg,currentColor,transparent);}
+
+        /* ── Primary Action Button ── */
+        .pl-btn-search{
+          display:inline-flex;align-items:center;justify-content:center;gap:9px;
+          padding:13.5px 26px;
+          background:linear-gradient(135deg,rgba(${accentRgb},.12),rgba(${accentRgb},.04));
+          border:1px solid rgba(${accentRgb},.22);border-radius:13px;
+          color:${accent};font-size:.88rem;font-weight:700;font-family:'Outfit',sans-serif;
+          cursor:pointer;letter-spacing:.02em;
+          transition:background .3s,border-color .3s,box-shadow .3s,transform .2s;
+          position:relative;overflow:hidden;white-space:nowrap;
+          box-shadow:0 4px 16px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.04);
+        }
+        .pl-btn-search::after{content:'';position:absolute;top:0;left:-100%;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(${accentRgb},.12),transparent);animation:shimmer 3.2s ease-in-out infinite;}
+        .pl-btn-search:hover:not(:disabled){background:linear-gradient(135deg,rgba(${accentRgb},.2),rgba(${accentRgb},.08));border-color:rgba(${accentRgb},.36);box-shadow:0 8px 24px rgba(0,0,0,.4),0 0 18px rgba(${accentRgb},.08);transform:translateY(-1px);}
+        .pl-btn-search:active:not(:disabled){transform:translateY(0) scale(.99);}
+        .pl-btn-search:disabled{opacity:.38;cursor:not-allowed;}
+
+        /* ── Gradient CTA Button ── */
+        .pl-btn-cta{
+          display:flex;align-items:center;justify-content:center;gap:10px;
+          width:100%;padding:15.5px;
+          background:linear-gradient(135deg,${accent},${accent2},${accent});
+          background-size:220% 220%;animation:gradShift 4.5s ease infinite;
+          border:none;border-radius:14px;color:#000;
+          font-size:.92rem;font-weight:800;font-family:'Outfit',sans-serif;
+          cursor:pointer;letter-spacing:.03em;
+          box-shadow:0 0 28px rgba(${accentRgb},.28),0 10px 28px rgba(0,0,0,.55);
+          transition:transform .25s,box-shadow .3s;
+          position:relative;overflow:hidden;
+        }
+        .pl-btn-cta::after{content:'';position:absolute;top:0;left:-100%;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);animation:shimmer 3s ease-in-out infinite;}
+        .pl-btn-cta:hover:not(:disabled){transform:translateY(-2px) scale(1.01);box-shadow:0 0 44px rgba(${accentRgb},.44),0 18px 38px rgba(0,0,0,.65);}
+        .pl-btn-cta:active:not(:disabled){transform:translateY(0) scale(.99);}
+        .pl-btn-cta:disabled{opacity:.45;cursor:not-allowed;}
+
+        /* ── Amber Button ── */
+        .pl-btn-amber{
+          display:inline-flex;align-items:center;gap:9px;
+          padding:13.5px 26px;background:rgba(245,158,11,.07);
+          border:1px solid rgba(245,158,11,.22);border-radius:13px;
+          color:#f59e0b;font-size:.88rem;font-weight:700;font-family:'Outfit',sans-serif;
+          cursor:pointer;transition:all .3s;position:relative;overflow:hidden;
+          box-shadow:0 4px 14px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.04);
+        }
+        .pl-btn-amber::after{content:'';position:absolute;top:0;left:-100%;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(245,158,11,.1),transparent);animation:shimmer 3.8s ease-in-out infinite;}
+        .pl-btn-amber:hover:not(:disabled){background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.35);transform:translateY(-1px);box-shadow:0 8px 22px rgba(0,0,0,.38),0 0 14px rgba(245,158,11,.08);}
+        .pl-btn-amber:active:not(:disabled){transform:translateY(0);}
+        .pl-btn-amber:disabled{opacity:.38;cursor:not-allowed;}
+
+        /* ── Info Tile ── */
+        .pl-info-tile{
+          background:rgba(255,255,255,.018);border:1px solid rgba(255,255,255,.048);
+          border-radius:14px;padding:14px 16px;
+          transition:border-color .3s,background .28s;
+        }
+        .pl-info-tile:hover{border-color:rgba(${accentRgb},.14);background:rgba(${accentRgb},.022);}
+
+        /* ── Session Row ── */
+        .pl-session-row{
+          display:flex;justify-content:space-between;align-items:center;
+          padding:14px 16px;background:rgba(255,255,255,.018);
+          border:1px solid rgba(255,255,255,.045);border-radius:16px;
+          cursor:pointer;transition:border-color .28s,background .28s,transform .22s,box-shadow .28s;
+        }
+        .pl-session-row:hover{border-color:rgba(${accentRgb},.2);background:rgba(${accentRgb},.028);transform:translateX(3px);box-shadow:0 6px 20px rgba(0,0,0,.3),0 0 12px rgba(${accentRgb},.04);}
+
+        /* ── Badge ── */
+        .pl-badge{padding:4px 10px;border-radius:100px;font-size:.59rem;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:.06em;display:inline-flex;align-items:center;gap:5px;}
+
+        /* ── Progress bar ── */
+        .pl-progress-track{height:2.5px;border-radius:3px;background:rgba(255,255,255,.04);overflow:hidden;margin-top:8px;}
+        .pl-progress-fill{height:100%;border-radius:3px;transition:width .3s ease;}
+
+        /* ── Session scroll ── */
+        .pl-sessions{max-height:300px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(${accentRgb},.15) transparent;}
+        .pl-sessions::-webkit-scrollbar{width:3px;}
+        .pl-sessions::-webkit-scrollbar-thumb{background:rgba(${accentRgb},.18);border-radius:2px;}
+
+        /* ── Warn box ── */
+        .pl-warn{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:12px;background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.16);}
+
+        @media(max-width:580px){
+          .pl-two-col{grid-template-columns:1fr!important;}
+          .pl-search-flex{flex-direction:column!important;}
+          .pl-search-flex .pl-btn-search{width:100%!important;}
+        }
+      `}</style>
+
+      <BackgroundScene isHC={isHC} />
+
+      <div style={{ position: 'relative', zIndex: 1, maxWidth: 680, margin: '0 auto', padding: '48px 22px 72px' }}>
+
+        {/* ══ HEADER ══ */}
+        <div className="pl-fade pl-d1" style={{ marginBottom: 36 }}>
+
+          {/* Top row */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+            <div className="pl-holo" style={{ background: `rgba(${accentRgb},.04)`, border: `1px solid rgba(${accentRgb},.16)`, color: accent }}>
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: accent, boxShadow: `0 0 7px ${accent}`, animation: 'blink 2s infinite', flexShrink: 0 }} />
+              {domain} Mode
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'JetBrains Mono', fontSize: '.57rem', color: '#334155', letterSpacing: '.07em' }}>
+              <span style={{ color: '#475569' }}>Domain</span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#334155" strokeWidth="2"><polyline points="9 18 15 12 9 6" /></svg>
+              <span style={{ color: accent }}>Lookup</span>
+            </div>
+          </div>
+
+          {/* Heading */}
+          <h1 style={{ fontFamily: 'Outfit', fontWeight: 900, fontSize: 'clamp(1.9rem,3.2vw,2.6rem)', color: '#f8fafc', lineHeight: 1.07, letterSpacing: '-.026em', marginBottom: 10 }}>
+            {isHC ? 'Patient' : 'Client'}{' '}
+            <span style={{ background: `linear-gradient(135deg,${accent},${accent2})`, backgroundSize: '200% 200%', animation: 'gradShift 5s ease infinite', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Lookup</span>
+          </h1>
+          <p style={{ fontSize: '.9rem', lineHeight: 1.72, color: '#64748b', maxWidth: 460, marginBottom: 18 }}>
+            Search by mobile number to retrieve an existing {isHC ? 'patient' : 'client'} record, or register a new profile in seconds.
+          </p>
+
+         
+         
+        </div>
+
+        {/* ══ SEARCH CARD ══ */}
+        <div className="pl-fade pl-d2" style={{ marginBottom: 16 }}>
+          <StaticCard accentRgb={accentRgb} accent2Rgb={accent2Rgb}>
+            <div style={{ padding: '30px 30px 28px' }}>npm run e
+
+              {/* Card header */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, position: 'relative', zIndex: 4 }}>
+                <span className="pl-sec-label" style={{ color: accent }}>Phone Search</span>
+                <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg,rgba(${accentRgb},.13),transparent)` }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 9px', borderRadius: 100, background: `rgba(${accentRgb},.04)`, border: `1px solid rgba(${accentRgb},.14)` }}>
+                  <div style={{ width: 4, height: 4, borderRadius: '50%', background: accent, boxShadow: `0 0 5px ${accent}`, animation: 'blink 1.8s infinite' }} />
+                  <span style={{ fontFamily: 'JetBrains Mono', fontSize: '.54rem', color: accent, letterSpacing: '.07em', fontWeight: 600 }}>READY</span>
+                </div>
+              </div>
+
+              {/* Search row */}
+              <div className="pl-search-flex" style={{ display: 'flex', gap: 12, alignItems: 'flex-end', position: 'relative', zIndex: 4 }}>
+                <div style={{ flex: 1 }}>
+                  <InputField
+                    label="Mobile Number" placeholder="10-digit number"
+                    value={phone} onChange={v => setPhone(v.replace(/\D/g, ''))}
+                    onKeyDown={e => e.key === 'Enter' && searchPerson()}
+                    icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></svg>}
+                    {...f('phone')} accentRgb={accentRgb} accent={accent} maxLength={10}
+                  />
+                </div>
+                <button className="pl-btn-search" onClick={searchPerson} disabled={loading || phone.length < 10} style={{ marginBottom: 0 }}>
+                  {loading ? (
+                    <><span style={{ width: 13, height: 13, border: `2px solid rgba(${accentRgb},.2)`, borderTopColor: accent, borderRadius: '50%', animation: 'spin .65s linear infinite', flexShrink: 0 }} />Searching</>
+                  ) : (
+                    <>Search <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg></>
+                  )}
+                </button>
+              </div>
+
+              {/* Progress bar */}
+              {phone.length > 0 && phone.length < 10 && (
+                <div style={{ position: 'relative', zIndex: 4 }}>
+                  <div className="pl-progress-track">
+                    <div className="pl-progress-fill" style={{ width: `${phone.length / 10 * 100}%`, background: `linear-gradient(90deg,${accent},${accent2})` }} />
+                  </div>
+                  <p style={{ fontFamily: 'JetBrains Mono', fontSize: '.56rem', color: '#475569', marginTop: 5, letterSpacing: '.04em' }}>{phone.length}/10 digits</p>
+                </div>
+              )}
+            </div>
+          </StaticCard>
+        </div>
+
+        {/* ══ NOT FOUND / CREATE FORM ══ */}
+        {notFound && showNewForm && (
+          <div className="pl-fade" style={{ marginBottom: 16 }}>
+            <StaticCard accentRgb="245,158,11" accent2Rgb="248,113,113">
+              <div style={{ padding: '30px 30px 28px' }}>
+
+                {/* Warn */}
+                <div className="pl-warn" style={{ marginBottom: 20, position: 'relative', zIndex: 4 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                    <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+                  </svg>
+                  <span style={{ fontFamily: 'JetBrains Mono', fontSize: '.65rem', color: '#f59e0b', fontWeight: 600 }}>
+                    No record found for <span style={{ fontFamily: 'JetBrains Mono', letterSpacing: '.06em' }}>{phone}</span>
+                  </span>
+                </div>
+
+                {/* Section label */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, position: 'relative', zIndex: 4 }}>
+                  <span className="pl-sec-label" style={{ color: '#f59e0b' }}>New {isHC ? 'Patient' : 'Client'} Record</span>
+                  <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg,rgba(245,158,11,.14),transparent)' }} />
+                </div>
+
+                {/* Form */}
+                <div className="pl-two-col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14, position: 'relative', zIndex: 4 }}>
+                  <InputField label="Full Name" placeholder="John Doe" value={newPerson.name}
+                    onChange={v => setNewPerson({ ...newPerson, name: v })}
+                    icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>}
+                    {...f('name')} accentRgb="245,158,11" accent="#f59e0b" required />
+                  <InputField label="Email" placeholder="john@example.com" value={newPerson.email} type="email"
+                    onChange={v => setNewPerson({ ...newPerson, email: v })}
+                    icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></svg>}
+                    {...f('email')} accentRgb="245,158,11" accent="#f59e0b" />
+                </div>
+
+                <div className="pl-two-col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 24, position: 'relative', zIndex: 4 }}>
+                  <InputField label="Age" placeholder="e.g. 35" value={newPerson.age} type="number"
+                    onChange={v => setNewPerson({ ...newPerson, age: v })}
+                    icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>}
+                    {...f('age')} accentRgb="245,158,11" accent="#f59e0b" />
+                  <SelectField label="Gender" value={newPerson.gender}
+                    onChange={v => setNewPerson({ ...newPerson, gender: v })}
+                    icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 8v-2M12 18v-2M8 12H6M18 12h-2" /></svg>}
+                    {...f('gender')} accentRgb="245,158,11" accent="#f59e0b"
+                    options={[{ value: '', label: 'Select gender' }, { value: 'Male', label: 'Male' }, { value: 'Female', label: 'Female' }, { value: 'Other', label: 'Other' }]} />
+                </div>
+
+                <button className="pl-btn-amber" onClick={createPerson} disabled={!newPerson.name || createLoading} style={{ position: 'relative', zIndex: 4 }}>
+                  {createLoading
+                    ? <><span style={{ width: 13, height: 13, border: '2px solid rgba(245,158,11,.2)', borderTopColor: '#f59e0b', borderRadius: '50%', animation: 'spin .65s linear infinite', flexShrink: 0 }} />Creating…</>
+                    : <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>Create {isHC ? 'Patient' : 'Client'} Record</>}
+                </button>
+              </div>
+            </StaticCard>
+          </div>
+        )}
+
+        {/* ══ PERSON FOUND ══ */}
+        {person && !showNewForm && (
+          <>
+            {/* Profile + Action */}
+            <div className="pl-fade pl-d3" style={{ marginBottom: 16 }}>
+              <StaticCard accentRgb={accentRgb} accent2Rgb={accent2Rgb}>
+                <div style={{ padding: '30px 30px 0', position: 'relative', zIndex: 4 }}>
+
+                  {/* Profile header */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 22 }}>
+                    {/* Avatar */}
+                    <div style={{ position: 'relative', flexShrink: 0 }}>
+                      <div style={{ width: 60, height: 60, borderRadius: 17, background: `linear-gradient(135deg,rgba(${accentRgb},.14),rgba(${accentRgb},.04))`, border: `1px solid rgba(${accentRgb},.22)`, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `6px 6px 20px rgba(0,0,0,.5),0 0 26px rgba(${accentRgb},.07),inset 0 1px 0 rgba(255,255,255,.08)` }}>
+                        <div style={{ position: 'absolute', inset: -7, borderRadius: 22, border: `1px dashed rgba(${accentRgb},.18)`, animation: 'spinRing 11s linear infinite' }} />
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ filter: `drop-shadow(0 0 7px rgba(${accentRgb},.5))` }}>
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+                        </svg>
+                      </div>
+                    </div>
+
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontFamily: 'Outfit', fontWeight: 900, fontSize: '1.2rem', color: '#f8fafc', letterSpacing: '-.02em', marginBottom: 5 }}>{person.name || 'Unknown'}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                          <div style={{ width: 5, height: 5, borderRadius: '50%', background: accent, boxShadow: `0 0 7px ${accent}`, animation: 'blink 2s infinite' }} />
+                          <span style={{ fontFamily: 'JetBrains Mono', fontSize: '.58rem', color: accent, letterSpacing: '.08em', fontWeight: 600 }}>RECORD FOUND</span>
+                        </div>
+                        <span style={{ fontFamily: 'JetBrains Mono', fontSize: '.72rem', color: '#475569', letterSpacing: '.06em' }}>{person.phone}</span>
+                      </div>
+                    </div>
+
+                    {person.sessions?.length > 0 && (
+                      <div style={{ textAlign: 'center', padding: '10px 15px', borderRadius: 13, background: `rgba(${accentRgb},.05)`, border: `1px solid rgba(${accentRgb},.14)` }}>
+                        <div style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '1.4rem', color: accent, filter: `drop-shadow(0 0 6px rgba(${accentRgb},.38))`, lineHeight: 1 }}>{person.sessions.length}</div>
+                        <div style={{ fontFamily: 'JetBrains Mono', fontSize: '.52rem', color: '#475569', letterSpacing: '.05em', textTransform: 'uppercase', marginTop: 3 }}>Sessions</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Info tiles */}
+                  <div className="pl-two-col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9, marginBottom: 22 }}>
+                    {[
+                      { label: 'Phone', val: person.phone, icon: 'M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z', mono: true },
+                      { label: 'Age', val: person.age ?? '—', icon: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 6v6l4 2', mono: false },
+                      { label: 'Gender', val: person.gender ?? '—', icon: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8z', mono: false },
+                      { label: 'Email', val: person.email ?? '—', icon: 'M4 4h16c1.1 0 2 .9 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6c0-1.1.9-2 2-2z', mono: false, extra: 'M22 6l-10 7L2 6' },
+                    ].map(tile => (
+                      <div key={tile.label} className="pl-info-tile">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
+                          <div style={{ width: 18, height: 18, borderRadius: 6, background: `rgba(${accentRgb},.06)`, border: `1px solid rgba(${accentRgb},.12)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d={tile.icon} />{tile.extra && <path d={tile.extra} />}
+                            </svg>
+                          </div>
+                          <span style={{ fontFamily: 'JetBrains Mono', fontSize: '.55rem', color: '#475569', letterSpacing: '.1em', textTransform: 'uppercase' }}>{tile.label}</span>
+                        </div>
+                        <p style={{ fontSize: tile.mono ? '.78rem' : '.88rem', color: '#e2e8f0', fontWeight: 600, fontFamily: tile.mono ? 'JetBrains Mono' : 'Outfit', paddingLeft: 25, letterSpacing: tile.mono ? '.05em' : '-.01em', wordBreak: 'break-all' }}>{tile.val}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* CTA button flush to bottom */}
+                <div style={{ padding: '0 30px 30px', position: 'relative', zIndex: 4 }}>
+                  <button className="pl-btn-cta" onClick={startSession} disabled={sessionLoading}>
+                    {sessionLoading
+                      ? <><span style={{ width: 15, height: 15, border: '2px solid rgba(0,0,0,.2)', borderTopColor: '#000', borderRadius: '50%', animation: 'spin .6s linear infinite', flexShrink: 0 }} />Launching Session…</>
+                      : <>Start New Session <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3" /></svg></>}
+                  </button>
+                </div>
+              </StaticCard>
+            </div>
+
+            {/* Session History */}
+            {person.sessions?.length > 0 && (
+              <div className="pl-fade pl-d4">
+                <StaticCard accentRgb={accentRgb} accent2Rgb={accent2Rgb}>
+                  <div style={{ padding: '28px 28px 24px', position: 'relative', zIndex: 4 }}>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
+                      <span className="pl-sec-label" style={{ color: accent }}>Session History</span>
+                      <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg,rgba(${accentRgb},.12),transparent)` }} />
+                      <div style={{ padding: '3px 10px', borderRadius: 100, background: `rgba(${accentRgb},.05)`, border: `1px solid rgba(${accentRgb},.14)` }}>
+                        <span style={{ fontFamily: 'JetBrains Mono', fontSize: '.56rem', color: accent, fontWeight: 700 }}>{person.sessions.length}</span>
+                      </div>
+                    </div>
+
+                    <div className="pl-sessions" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {person.sessions.map((s: any, i: number) => (
+                        <div key={s.id} className="pl-session-row"
+                          style={{ animation: 'slideRight .4s ease both', animationDelay: `${i * 55}ms` } as React.CSSProperties}
+                          onClick={() => router.push(`/session/${s.id}`)}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <div style={{ width: 34, height: 34, borderRadius: 10, background: `rgba(${accentRgb},.05)`, border: `1px solid rgba(${accentRgb},.1)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: .7 }}>
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <polyline points="14 2 14 8 20 8" />
+                                <line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
+                              </svg>
+                            </div>
+                            <div>
+                              <p style={{ fontSize: '.83rem', color: '#e2e8f0', fontWeight: 700, marginBottom: 3, fontFamily: 'Outfit', letterSpacing: '-.01em' }}>
+                                {s.department.replace(/_/g, ' ')}
+                              </p>
+                              <p style={{ fontSize: '.59rem', color: '#475569', fontFamily: 'JetBrains Mono', letterSpacing: '.04em' }}>
+                                {format(new Date(s.createdAt), 'MMM dd, yyyy · HH:mm')}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                            <span className="pl-badge" style={{ background: s.status === 'COMPLETED' ? `rgba(${accentRgb},.06)` : 'rgba(245,158,11,.06)', border: `1px solid ${s.status === 'COMPLETED' ? `rgba(${accentRgb},.18)` : 'rgba(245,158,11,.18)'}`, color: s.status === 'COMPLETED' ? accent : '#f59e0b' }}>
+                              <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'currentColor', flexShrink: 0 }} />
+                              {s.status}
+                            </span>
+                            {s.approved && (
+                              <span className="pl-badge" style={{ background: 'rgba(52,211,153,.06)', border: '1px solid rgba(52,211,153,.18)', color: '#34d399' }}>
+                                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                                APPROVED
+                              </span>
+                            )}
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#334155" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </StaticCard>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </>
+  )
+}
