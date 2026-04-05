@@ -398,7 +398,7 @@ export default function SessionPage() {
   // ── Patient Summary ─────────────────────────────────────────────────────
   const [showSummary, setShowSummary]             = useState(false)
   const [summary, setSummary]                     = useState<any>(null)
-  const [summaryLang, setSummaryLang]             = useState<LangKey>('ENGLISH')
+  const [summaryLang, setSummaryLang]             = useState<LangKey>('KANNADA')
   const [generatingSummary, setGeneratingSummary] = useState(false)
   const [summaryTtsId, setSummaryTtsId]           = useState<string | null>(null)
 
@@ -811,7 +811,7 @@ export default function SessionPage() {
       const transcript = messages.map(m => `${m.speaker === 'doctor' ? 'Doctor' : 'Patient'}: ${m.translations.ENGLISH}`).join('\n')
       const res = await fetch('/api/ai/generate-report', {
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ transcript, extractedData, nerEntities, domain: session.domain, department: session.department, template: session.config?.template, personName: session.person.name })
+        body: JSON.stringify({ transcript, extractedData, nerEntities, domain: session.domain, department: session.department, template: session.config?.template, personName: session.person.name, language: 'KANNADA' })
       })
       const { report: generated } = await res.json()
       await fetch(`/api/session/${sessionId}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ finalReport: generated }) })

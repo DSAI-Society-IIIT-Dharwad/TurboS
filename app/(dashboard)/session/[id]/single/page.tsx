@@ -125,6 +125,8 @@ export default function SingleSessionPage() {
   const [showSummary, setShowSummary] = useState(false)
   const [summary, setSummary] = useState<any>(null)
   const [generatingSummary, setGeneratingSummary] = useState(false)
+  const [summaryLang, setSummaryLang] = useState<LangKey>('KANNADA')
+  const [summaryTtsId, setSummaryTtsId] = useState<string | null>(null)
 
   // ── PDF lang ── 
   const [showPdfLangPicker, setShowPdfLangPicker] = useState(false)
@@ -384,7 +386,18 @@ export default function SingleSessionPage() {
 
   // ── Transcript ──
   const openTranscript = async () => {
-    const sentences = utterances.map(u => u.text).filter(t => t.trim())
+    // Split each utterance into individual sentences for better speaker labeling
+    const rawTexts = utterances.map(u => u.text).filter(t => t.trim())
+    const sentences: string[] = []
+    for (const raw of rawTexts) {
+      // Split on sentence-ending punctuation, keeping the delimiter attached
+      const parts = raw.split(/(?<=[.?!।])\.?\s+/).map(s => s.trim()).filter(s => s.length > 0)
+      if (parts.length > 0) {
+        sentences.push(...parts)
+      } else {
+        sentences.push(raw)
+      }
+    }
     const text = sentences.join('\n\n')
     setFullTranscript(text)
     setOriginalTranscript(text)
@@ -492,7 +505,7 @@ export default function SingleSessionPage() {
       }
       const res = await fetch('/api/ai/generate-report', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transcript: englishText, extractedData, nerEntities, domain: session.domain, department: session.department, template: session.config?.template, personName: session.person.name })
+        body: JSON.stringify({ transcript: englishText, extractedData, nerEntities, domain: session.domain, department: session.department, template: session.config?.template, personName: session.person.name, language: 'KANNADA' })
       })
       const { report: generated } = await res.json()
       await fetch(`/api/session/${sessionId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ finalReport: generated }) })
@@ -560,6 +573,26 @@ export default function SingleSessionPage() {
       if (res.ok) { const { summary: s } = await res.json(); setSummary(s) }
     } catch {}
     finally { setGeneratingSummary(false) }
+  }
+
+  const playSummaryTts = async (text: string, id: string) => {
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0 }
+    if (summaryTtsId === id) { setSummaryTtsId(null); return }
+    setSummaryTtsId(id)
+    try {
+      const res = await fetch('/api/voice/tts', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text.substring(0, 490), language: summaryLang })
+      })
+      const rd = await res.json()
+      if (rd.audio) {
+        const audio = new Audio(`data:audio/wav;base64,${rd.audio}`)
+        audioRef.current = audio
+        audio.onended = () => setSummaryTtsId(null)
+        audio.onerror = () => setSummaryTtsId(null)
+        await audio.play()
+      }
+    } catch { setSummaryTtsId(null) }
   }
 
   // ── PDF language picker ──
@@ -1814,29 +1847,123 @@ export default function SingleSessionPage() {
           </div>
         )}
 
-        {/* ── SUMMARY MODAL ── */}
+        {/* ── SMART SUMMARY MODAL ── */}
         {showSummary && (
-          <div style={{ position: 'fixed', inset: 0, zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,.75)', backdropFilter: 'blur(8px)' }}
-            onClick={() => setShowSummary(false)}>
-            <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 600, maxHeight: '80vh', background: '#0D0D0D', border: '1px solid #242424', borderRadius: 16, overflow: 'auto', padding: 24 }}>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-[#34D399]" />
-                  <span style={{ fontWeight: 700, color: '#E8E8E8' }}>Smart Summary</span>
+          <div
+            style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.85)', zIndex:10000, display:'flex', alignItems:'flex-start', justifyContent:'center', backdropFilter:'blur(8px)', overflowY:'auto', padding:'24px 16px' }}
+            onClick={(e) => { if (e.target === e.currentTarget) setShowSummary(false) }}
+          >
+            <div style={{ background:'#0D0D0D', border:'1px solid #1E1E1E', borderRadius:20, width:'100%', maxWidth:700, boxShadow:'0 32px 100px rgba(0,0,0,0.8)', marginBottom:24 }}>
+
+              {/* Modal Header */}
+              <div style={{ padding:'20px 24px 0', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+                  <div style={{ width:44, height:44, borderRadius:12, background:'linear-gradient(135deg,#0A1A14,#051A10)', border:'1px solid #34D39966', display:'flex', alignItems:'center', justifyContent:'center', fontSize:22 }}>📋</div>
+                  <div>
+                    <p style={{ fontFamily:'DM Sans,sans-serif', fontSize:16, fontWeight:700, color:'#E8E8E8', margin:0 }}>Smart Summary</p>
+                    <p style={{ fontFamily:'IBM Plex Mono,monospace', fontSize:10, color:'#555', margin:'2px 0 0' }}>
+                      Simple language • For {session?.domain === 'HEALTHCARE' ? 'Patient' : 'Client'}: {session?.person?.name}
+                    </p>
+                  </div>
                 </div>
-                <button onClick={() => setShowSummary(false)} className="btn-icon w-7 h-7"><X className="w-4 h-4" /></button>
+                <button onClick={() => setShowSummary(false)}
+                  style={{ width:32, height:32, borderRadius:10, border:'1px solid #2A2A2A', background:'#141414', color:'#666', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16 }}>✕</button>
               </div>
-              {generatingSummary ? (
-                <div className="flex flex-col items-center py-12 gap-3">
-                  <Loader2 className="w-8 h-8 animate-spin text-[#34D399]" />
-                  <p className="mono text-xs text-[#555]">Analyzing conversation...</p>
-                </div>
-              ) : summary ? (
-                <div className="prose prose-invert text-sm" style={{ color: '#BBB', lineHeight: 1.7 }}
-                  dangerouslySetInnerHTML={{ __html: typeof summary === 'string' ? summary : JSON.stringify(summary, null, 2) }} />
-              ) : (
-                <p className="text-center text-sm text-[#555] py-8">No summary generated</p>
-              )}
+
+              {/* Language Tabs */}
+              <div style={{ display:'flex', gap:4, padding:'16px 24px 0' }}>
+                {([
+                  { lang: 'ENGLISH' as LangKey, label: '🇬🇧 English', accent: '#00D4FF' },
+                  { lang: 'HINDI'   as LangKey, label: '🇮🇳 हिंदी',    accent: '#F59E0B' },
+                  { lang: 'KANNADA' as LangKey, label: '🏛️ ಕನ್ನಡ',   accent: '#34D399' },
+                ]).map(({ lang, label, accent }) => (
+                  <button key={lang} onClick={() => setSummaryLang(lang)} style={{
+                    padding:'6px 16px', borderRadius:8, border:`1px solid ${summaryLang === lang ? accent : '#2A2A2A'}`,
+                    background: summaryLang === lang ? `${accent}18` : 'transparent',
+                    color: summaryLang === lang ? accent : '#555',
+                    fontFamily:'DM Sans,sans-serif', fontSize:12, fontWeight:600, cursor:'pointer', transition:'all .15s'
+                  }}>{label}</button>
+                ))}
+              </div>
+
+              {/* Content */}
+              <div style={{ padding:'20px 24px 24px' }}>
+                {generatingSummary ? (
+                  <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'60px 0', gap:16 }}>
+                    <Loader2 style={{ width:32, height:32, color:'#34D399' }} className="animate-spin"/>
+                    <p style={{ fontFamily:'IBM Plex Mono,monospace', fontSize:12, color:'#555', margin:0 }}>Generating summary in 3 languages…</p>
+                  </div>
+                ) : summary ? (() => {
+                  const langKey = summaryLang === 'ENGLISH' ? 'english' : summaryLang === 'HINDI' ? 'hindi' : 'kannada'
+                  const s = summary[langKey] || {}
+                  const isHealthcare = session?.domain === 'HEALTHCARE'
+
+                  const Section = ({ emoji, title, accent, items, text, ttsId }: {
+                    emoji: string; title: string; accent: string;
+                    items?: string[]; text?: string; ttsId: string
+                  }) => {
+                    const ttsText = text || (items || []).join('. ')
+                    if (!ttsText?.trim()) return null
+                    return (
+                      <div style={{ background:'#111', border:`1px solid ${accent}22`, borderLeft:`3px solid ${accent}`, borderRadius:10, padding:'14px 16px', marginBottom:12 }}>
+                        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
+                          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                            <span style={{ fontSize:18 }}>{emoji}</span>
+                            <span style={{ fontFamily:'IBM Plex Mono,monospace', fontSize:11, fontWeight:700, color: accent, letterSpacing:'0.08em', textTransform:'uppercase' as const }}>{title}</span>
+                          </div>
+                          <button onClick={() => playSummaryTts(ttsText, ttsId)}
+                            style={{ display:'flex', alignItems:'center', gap:5, padding:'3px 10px', border:`1px solid ${accent}44`, borderRadius:6, background:`${accent}11`, color: accent, cursor:'pointer', fontFamily:'IBM Plex Mono,monospace', fontSize:10, transition:'all .15s' }}>
+                            {summaryTtsId === ttsId
+                              ? <Loader2 style={{ width:10, height:10 }} className="animate-spin"/>
+                              : <Volume2 style={{ width:10, height:10 }}/>}
+                            {summaryTtsId === ttsId ? 'playing' : 'Listen'}
+                          </button>
+                        </div>
+                        {text ? (
+                          <p style={{ fontFamily:'DM Sans,sans-serif', fontSize:14, color:'#CCC', margin:0, lineHeight:1.65 }}>{text}</p>
+                        ) : (
+                          <ul style={{ margin:0, paddingLeft:16 }}>
+                            {(items || []).map((item, i) => (
+                              <li key={i} style={{ fontFamily:'DM Sans,sans-serif', fontSize:14, color:'#CCC', marginBottom:5, lineHeight:1.65 }}>{item}</li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )
+                  }
+
+                  return (
+                    <div>
+                      <Section emoji="🩺" title={isHealthcare ? 'Main Problem' : 'Main Goal'} accent="#00D4FF" text={s.mainProblem} ttsId="main"/>
+                      <Section emoji="🔍" title="Key Findings" accent="#A78BFA" items={s.keyFindings} ttsId="findings"/>
+                      {isHealthcare
+                        ? <Section emoji="💊" title="Medicines" accent="#F472B6" items={s.medicines} ttsId="meds"/>
+                        : <Section emoji="📌" title="Action Items" accent="#F472B6" items={s.actionItems} ttsId="actions"/>}
+                      <Section emoji="✅" title="What To Do" accent="#34D399" items={s.doList} ttsId="todo"/>
+                      <Section emoji="📅" title="Follow-Up" accent="#F59E0B" text={s.followUp} ttsId="followup"/>
+                      {(s.redFlags || []).length > 0 && (
+                        <Section emoji="🚨" title="Warning Signs" accent="#F87171" items={s.redFlags} ttsId="red"/>
+                      )}
+                      {s.encouragement && (
+                        <div style={{ background:'linear-gradient(135deg,#0A1A14,#051A10)', border:'1px solid #34D39944', borderRadius:10, padding:'14px 16px', display:'flex', alignItems:'center', gap:12 }}>
+                          <span style={{ fontSize:24 }}>💚</span>
+                          <p style={{ fontFamily:'DM Sans,sans-serif', fontSize:14, color:'#34D399', margin:0, lineHeight:1.65, fontStyle:'italic' }}>"{s.encouragement}"</p>
+                          <button onClick={() => playSummaryTts(s.encouragement, 'enc')}
+                            style={{ flexShrink:0, display:'flex', alignItems:'center', gap:4, padding:'3px 10px', border:'1px solid #34D39944', borderRadius:6, background:'#34D39911', color:'#34D399', cursor:'pointer', fontFamily:'IBM Plex Mono,monospace', fontSize:10 }}>
+                            {summaryTtsId === 'enc' ? <Loader2 style={{ width:10, height:10 }} className="animate-spin"/> : <Volume2 style={{ width:10, height:10 }}/>}
+                            {summaryTtsId === 'enc' ? 'playing' : 'Listen'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })() : (
+                  <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'60px 0', gap:12 }}>
+                    <BookOpen style={{ width:32, height:32, color:'#333' }}/>
+                    <p style={{ fontFamily:'IBM Plex Mono,monospace', fontSize:12, color:'#444', margin:0 }}>Click "Smart Summary" to generate</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
