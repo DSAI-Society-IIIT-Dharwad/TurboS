@@ -907,7 +907,7 @@ export default function LoginPage() {
               </span>
             ) : (
               <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                <LanguageCycler texts={['Sign In', 'ಸೈನ್ ಇನ್']} interval={3500} />
+                <LanguageCycler texts={['Sign In', 'ಸೈನ್ ಇನ್ ಮಾಡಿ']} interval={3500} />
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
                 </svg>

@@ -285,7 +285,7 @@ function InputField({
   label, placeholder, value, onChange, onKeyDown, type = 'text',
   icon, focused, onFocus, onBlur, accentRgb, accent, required = false, maxLength,
 }: {
-  label: string; placeholder: string; value: string;
+  label: React.ReactNode; placeholder: string; value: string;
   onChange: (v: string) => void; onKeyDown?: (e: React.KeyboardEvent) => void;
   type?: string; icon: React.ReactNode; focused: boolean;
   onFocus: () => void; onBlur: () => void;
@@ -1094,9 +1094,9 @@ export default function PersonLookupPage() {
               {domain} Mode
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'JetBrains Mono', fontSize: '.57rem', color: '#334155', letterSpacing: '.07em' }}>
-              <span style={{ color: '#475569' }}>Domain</span>
+              <span style={{ color: '#475569' }}><LanguageCycler texts={['Domain', 'ಡೊಮೇನ್']} interval={3500} /></span>
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#334155" strokeWidth="2"><polyline points="9 18 15 12 9 6" /></svg>
-              <span style={{ color: accent }}>Lookup</span>
+              <span style={{ color: accent }}><LanguageCycler texts={['Lookup', 'ಹುಡುಕಾಟ']} interval={3500} /></span>
             </div>
           </div>
 
@@ -1106,7 +1106,7 @@ export default function PersonLookupPage() {
             <span style={{ background: `linear-gradient(135deg,${accent},${accent2})`, backgroundSize: '200% 200%', animation: 'gradShift 5s ease infinite', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}><LanguageCycler texts={['Lookup', 'ಹುಡುಕಾಟ']} interval={3500} /></span>
           </h1>
           <p style={{ fontSize: '.9rem', lineHeight: 1.72, color: '#64748b', maxWidth: 460, marginBottom: 18 }}>
-            <LanguageCycler texts={[`Search by mobile number to retrieve an existing ${isHC ? 'patient' : 'client'} record, or register a new profile in seconds.`, `ಮೊಬೈಲ್ ಸಂಖ್ಯೆಯಿಂದ ಅಸ್ತಿತ್ವದಲ್ಲಿರುವ ${isHC ? 'ರೋಗಿ' : 'ಗ್ರಾಹಕ'} ದಾಖಲೆಯನ್ನು ಹುಡುಕಿ, ಅಥವಾ ಹೊಸ ಪ್ರೋಫೈಲ್ ರಚಿಸಿ.`]} interval={3500} />
+            <LanguageCycler texts={[`Search by mobile number to retrieve an existing ${isHC ? 'patient' : 'client'} record, or register a new profile in seconds.`, `ಅಸ್ತಿತ್ವದಲ್ಲಿರುವ ${isHC ? 'ರೋಗಿಯ' : 'ಗ್ರಾಹಕನ'} ದಾಖಲೆಯನ್ನು ಹಿಂಪಡೆಯಲು ಮೊಬೈಲ್ ಸಂಖ್ಯೆಯ ಮೂಲಕ ಹುಡುಕಿ, ಅಥವಾ ಸೆಕೆಂಡುಗಳಲ್ಲಿ ಹೊಸ ಪ್ರೊಫೈಲ್ ಅನ್ನು ನೋಂದಾಯಿಸಿ.`]} interval={3500} />
           </p>
 
          
@@ -1124,7 +1124,7 @@ export default function PersonLookupPage() {
                 <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg,rgba(${accentRgb},.13),transparent)` }} />
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 9px', borderRadius: 100, background: `rgba(${accentRgb},.04)`, border: `1px solid rgba(${accentRgb},.14)` }}>
                   <div style={{ width: 4, height: 4, borderRadius: '50%', background: accent, boxShadow: `0 0 5px ${accent}`, animation: 'blink 1.8s infinite' }} />
-                  <span style={{ fontFamily: 'JetBrains Mono', fontSize: '.54rem', color: accent, letterSpacing: '.07em', fontWeight: 600 }}><LanguageCycler texts={['READY', 'ಸಿದ್ಧ']} interval={3500} /></span>
+                  <span style={{ fontFamily: 'JetBrains Mono', fontSize: '.54rem', color: accent, letterSpacing: '.07em', fontWeight: 600 }}><LanguageCycler texts={['READY', 'ಸಿದ್ಧವಾಗಿದೆ']} interval={3500} /></span>
                 </div>
               </div>
 
@@ -1132,7 +1132,7 @@ export default function PersonLookupPage() {
               <div className="pl-search-flex" style={{ display: 'flex', gap: 12, alignItems: 'flex-end', position: 'relative', zIndex: 4 }}>
                 <div style={{ flex: 1 }}>
                   <InputField
-                    label="Mobile Number" placeholder="10-digit number"
+                    label={<LanguageCycler texts={['Mobile Number', 'ಮೊಬೈಲ್ ಸಂಖ್ಯೆ']} interval={3500} />} placeholder="10-ಅಂಕಿಯ ಸಂಖ್ಯೆ"
                     value={phone} onChange={v => setPhone(v.replace(/\D/g, ''))}
                     onKeyDown={e => e.key === 'Enter' && searchPerson()}
                     icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></svg>}
