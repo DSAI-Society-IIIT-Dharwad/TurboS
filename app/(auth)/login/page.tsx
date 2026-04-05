@@ -3,6 +3,35 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 
+// ─── Language Cycler ────────────────────────────────────────────────────────────
+function LanguageCycler({ texts, interval = 3000, style = {} }: { texts: string[]; interval?: number; style?: React.CSSProperties }) {
+  const [index, setIndex] = useState(0)
+  const [visible, setVisible] = useState(true)
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setVisible(false)
+      setTimeout(() => {
+        setIndex(i => (i + 1) % texts.length)
+        setVisible(true)
+      }, 400)
+    }, interval)
+    return () => clearInterval(timer)
+  }, [texts.length, interval])
+
+  return (
+    <span style={{
+      ...style,
+      display: 'inline-block',
+      transition: 'opacity 0.4s ease, transform 0.4s ease',
+      opacity: visible ? 1 : 0,
+      transform: visible ? 'translateY(0)' : 'translateY(8px)',
+    }}>
+      {texts[index]}
+    </span>
+  )
+}
+
 export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
@@ -780,12 +809,12 @@ export default function LoginPage() {
             fontFamily: 'Outfit', fontWeight: 900, fontSize: '1.6rem', color: '#f8fafc',
             letterSpacing: '-.025em', marginBottom: 6, lineHeight: 1.1,
           }}>
-            MediFi <span className="grad-span">Voice</span>
+            <LanguageCycler texts={['MediFi', 'ಮೆಡಿಫಿ']} interval={3500} /> <span className="grad-span"><LanguageCycler texts={['Voice', 'ಧ್ವನಿ']} interval={3500} /></span>
           </h1>
           <p style={{
             fontFamily: 'JetBrains Mono', fontSize: '.68rem', color: '#475569',
             letterSpacing: '.12em', textTransform: 'uppercase',
-          }}>Sign in to continue</p>
+          }}><LanguageCycler texts={['Sign in to continue', 'ಮುಂದುವರಿಯಲು ಸೈನ್ ಇನ್ ಮಾಡಿ']} interval={3500} /></p>
         </div>
 
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 18, position: 'relative', zIndex: 4 }}>
@@ -795,7 +824,7 @@ export default function LoginPage() {
                 background: focusedField === 'email' ? '#22d3ee' : '#334155',
                 boxShadow: focusedField === 'email' ? '0 0 6px #22d3ee' : 'none',
               }} />
-              Email
+              <LanguageCycler texts={['Email', 'ಇಮೇಲ್']} interval={3500} />
             </div>
             <div className="input-wrapper">
               <div className="input-icon">
@@ -823,7 +852,7 @@ export default function LoginPage() {
                 background: focusedField === 'password' ? '#818cf8' : '#334155',
                 boxShadow: focusedField === 'password' ? '0 0 6px #818cf8' : 'none',
               }} />
-              Password
+              <LanguageCycler texts={['Password', 'ಪಾಸ್‌ವರ್ಡ್']} interval={3500} />
             </div>
             <div className="input-wrapper">
               <div className="input-icon">
@@ -874,11 +903,11 @@ export default function LoginPage() {
             {loading ? (
               <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
                 <span className="spinner" />
-                Authenticating...
+                <LanguageCycler texts={['Authenticating...', 'ದೃಢೀಕರಿಸಲಾಗುತ್ತಿದೆ...']} interval={3500} />
               </span>
             ) : (
               <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                Sign In
+                <LanguageCycler texts={['Sign In', 'ಸೈನ್ ಇನ್']} interval={3500} />
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
                 </svg>
@@ -892,26 +921,26 @@ export default function LoginPage() {
             <span style={{
               fontFamily: 'JetBrains Mono', fontSize: '.62rem', color: '#334155',
               letterSpacing: '.12em', textTransform: 'uppercase',
-            }}>Demo Accounts</span>
+            }}><LanguageCycler texts={['Demo Accounts', 'ಡೆಮೋ ಖಾತೆಗಳು']} interval={3500} /></span>
           </div>
           <div style={{ display: 'flex', gap: 10 }}>
             <button className="demo-btn demo-btn-doctor" onClick={() => fillDemo('doctor')}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="2" style={{ opacity: .7 }}>
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
               </svg>
-              Doctor
+              <LanguageCycler texts={['Doctor', 'ವೈದ್ಯರು']} interval={3500} />
             </button>
             <button className="demo-btn demo-btn-finance" onClick={() => fillDemo('finance')}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2" style={{ opacity: .7 }}>
                 <line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
               </svg>
-              Finance
+              <LanguageCycler texts={['Finance', 'ಹಣಕಾಸು']} interval={3500} />
             </button>
             <button className="demo-btn demo-btn-admin" onClick={() => fillDemo('admin')}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="2" style={{ opacity: .7 }}>
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
-              Admin
+              <LanguageCycler texts={['Admin', 'ನಿರ್ವಾಹಕ']} interval={3500} />
             </button>
           </div>
         </div>
@@ -925,7 +954,7 @@ export default function LoginPage() {
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           </svg>
           <span style={{ fontFamily: 'JetBrains Mono', fontSize: '.58rem', color: '#1e293b', letterSpacing: '.08em' }}>
-            256-BIT ENCRYPTED · HIPAA COMPLIANT
+            <LanguageCycler texts={['256-BIT ENCRYPTED · HIPAA COMPLIANT', '256-ಬಿಟ್ ಎನ್‌ಕ್ರಿಪ್ಟೆಡ್ · HIPAA ಅನುಸರಣೆ']} interval={3500} />
           </span>
         </div>
       </div>

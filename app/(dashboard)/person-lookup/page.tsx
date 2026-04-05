@@ -4,6 +4,35 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { format } from 'date-fns/format'
 
+// ─── Language Cycler ────────────────────────────────────────────────────────────
+function LanguageCycler({ texts, interval = 3000, style = {} }: { texts: string[]; interval?: number; style?: React.CSSProperties }) {
+  const [index, setIndex] = useState(0)
+  const [visible, setVisible] = useState(true)
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setVisible(false)
+      setTimeout(() => {
+        setIndex(i => (i + 1) % texts.length)
+        setVisible(true)
+      }, 400)
+    }, interval)
+    return () => clearInterval(timer)
+  }, [texts.length, interval])
+
+  return (
+    <span style={{
+      ...style,
+      display: 'inline-block',
+      transition: 'opacity 0.4s ease, transform 0.4s ease',
+      opacity: visible ? 1 : 0,
+      transform: visible ? 'translateY(0)' : 'translateY(8px)',
+    }}>
+      {texts[index]}
+    </span>
+  )
+}
+
 // ─── ECG Line SVG ──────────────────────────────────────────────────────────────
 function ECGLine({ color = '#22d3ee', width = 300, opacity = 0.6 }: { color?: string; width?: number; opacity?: number }) {
   const id = `ecg-${color.replace('#', '')}-${width}`
@@ -371,6 +400,483 @@ function StaticCard({ children, accentRgb, accent2Rgb, style = {} }: {
   )
 }
 
+// ─── Entity color palette (shared with session page) ─────────────────────────
+const ENTITY_COLORS: Record<string, string> = {
+  symptoms: '#F87171', medications: '#2dd4bf', diseases: '#F59E0B',
+  procedures: '#60A5FA', bodyParts: '#A78BFA', severity: '#F87171',
+  duration: '#6EE7B7', frequency: '#FCD34D',
+  income: '#34D399', expenses: '#F87171', investments: '#60A5FA',
+  taxes: '#FBBF24', loans: '#F472B6', insurance: '#A78BFA',
+  goals: '#6EE7B7', amounts: '#FCD34D', timeframes: '#93C5FD', taxSections: '#86EFAC',
+}
+
+// ─── Health / Finance Timeline ────────────────────────────────────────────────
+function HealthTimeline({ sessions, accent, accentRgb, accent2Rgb, isHC, router, personName, domain }: {
+  sessions: any[]; accent: string; accentRgb: string; accent2Rgb: string; isHC: boolean; router: any; personName: string; domain: string
+}) {
+  const [activeTab, setActiveTab] = useState<'timeline' | 'symptoms' | 'medications' | 'summary'>('timeline')
+  const [aiSummary, setAiSummary] = useState<string | null>(null)
+  const [summaryLoading, setSummaryLoading] = useState(false)
+  const [summaryError, setSummaryError] = useState<string | null>(null)
+  const [summaryLang, setSummaryLang] = useState<'KANNADA' | 'ENGLISH' | 'HINDI'>('KANNADA')
+
+  // ── Aggregate entities across all sessions ──
+  const entityAgg: Record<string, Map<string, number>> = {}
+  const allMeds: Map<string, { count: number; lastSeen: string }> = new Map()
+  const allSymptoms: Map<string, { count: number; sessions: string[] }> = new Map()
+
+  sessions.forEach(s => {
+    const ner = s.nerEntities as Record<string, string[]> | null
+    if (!ner) return
+    Object.entries(ner).forEach(([cat, vals]) => {
+      if (!Array.isArray(vals) || vals.length === 0) return
+      if (!entityAgg[cat]) entityAgg[cat] = new Map()
+      vals.forEach(v => {
+        const key = String(v).trim()
+        if (!key) return
+        const lower = key.toLowerCase()
+        entityAgg[cat]!.set(lower, (entityAgg[cat]!.get(lower) || 0) + 1)
+
+        // Track medications separately
+        if (cat === 'medications') {
+          const existing = allMeds.get(lower)
+          allMeds.set(lower, {
+            count: (existing?.count || 0) + 1,
+            lastSeen: s.createdAt,
+          })
+        }
+        // Track symptoms separately
+        if (cat === 'symptoms') {
+          const existing = allSymptoms.get(lower)
+          allSymptoms.set(lower, {
+            count: (existing?.count || 0) + 1,
+            sessions: [...(existing?.sessions || []), format(new Date(s.createdAt), 'MMM dd')],
+          })
+        }
+      })
+    })
+  })
+
+  // Stats
+  const recurringSymptoms = [...allSymptoms.values()].filter(s => s.count > 1).length
+  const activeMedCount = allMeds.size
+  const lastSeenDate = sessions.length > 0 ? new Date(sessions[0].createdAt) : null
+  const daysSinceLastVisit = lastSeenDate ? Math.floor((Date.now() - lastSeenDate.getTime()) / (1000 * 60 * 60 * 24)) : null
+  const lastSeenText = daysSinceLastVisit !== null
+    ? daysSinceLastVisit === 0 ? 'Today' : daysSinceLastVisit === 1 ? '1 day ago' : `${daysSinceLastVisit} days ago`
+    : '—'
+
+  if (sessions.length === 0) return null
+
+  // Get chief complaint for a session
+  const getChiefComplaint = (s: any): string => {
+    const ed = s.extractedData as any
+    if (ed?.chiefComplaint) return ed.chiefComplaint
+    // Fallback: combine top symptoms
+    const ner = s.nerEntities as Record<string, string[]> | null
+    if (ner?.symptoms?.length) return ner.symptoms.slice(0, 3).join(', ')
+    if (ner?.goals?.length) return ner.goals.slice(0, 2).join(', ')
+    return s.department.replace(/_/g, ' ') + ' consultation'
+  }
+
+  // Get all entity tags for a session (for timeline display)
+  const getSessionTags = (s: any): { label: string; color: string }[] => {
+    const ner = s.nerEntities as Record<string, string[]> | null
+    if (!ner) return []
+    const tags: { label: string; color: string }[] = []
+    const priorityKeys = isHC
+      ? ['symptoms', 'medications', 'diseases', 'procedures']
+      : ['investments', 'goals', 'taxes', 'income']
+    priorityKeys.forEach(k => {
+      if (ner[k]?.length) {
+        ner[k].slice(0, 3).forEach(v => {
+          if (tags.length < 5) {
+            // Mark diseases with " — suspected" suffix
+            const suffix = k === 'diseases' ? ' — suspected' : ''
+            tags.push({ label: v + suffix, color: ENTITY_COLORS[k] || '#94a3b8' })
+          }
+        })
+      }
+    })
+    return tags
+  }
+
+  const TABS = [
+    { id: 'timeline' as const, label: 'Timeline' },
+    { id: 'symptoms' as const, label: 'Symptom trends' },
+    { id: 'medications' as const, label: 'Medications' },
+    { id: 'summary' as const, label: 'AI summary' },
+  ]
+
+  return (
+    <div className="pl-fade pl-d4" style={{ marginBottom: 16 }}>
+      <StaticCard accentRgb={accentRgb} accent2Rgb={accent2Rgb}>
+        <div style={{ padding: '28px 28px 24px', position: 'relative', zIndex: 4 }}>
+
+          {/* ── Stats Row ── */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 0, marginBottom: 22 }}>
+            {[
+              { label: 'Total visits', val: String(sessions.length), color: accent },
+              { label: 'Recurring symptoms', val: String(recurringSymptoms), color: '#F87171' },
+              { label: isHC ? 'Active medications' : 'Active investments', val: String(activeMedCount), color: '#2dd4bf' },
+              { label: 'Last seen', val: lastSeenText, color: '#94a3b8' },
+            ].map((stat, i) => (
+              <div key={stat.label} style={{ textAlign: i === 0 ? 'left' : 'left', padding: '0 12px', borderLeft: i > 0 ? '1px solid rgba(255,255,255,.04)' : 'none' }}>
+                <div style={{ fontFamily: 'JetBrains Mono', fontSize: '.56rem', color: '#64748b', letterSpacing: '.04em', marginBottom: 4 }}>
+                  {stat.label}
+                </div>
+                <div style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '1.15rem', color: stat.color, lineHeight: 1 }}>
+                  {stat.val}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* ── Tab Bar ── */}
+          <div style={{
+            display: 'flex', gap: 2, padding: 3, marginBottom: 20,
+            background: 'rgba(255,255,255,.02)', border: '1px solid rgba(255,255,255,.05)',
+            borderRadius: 10,
+          }}>
+            {TABS.map(tab => (
+              <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
+                flex: 1, padding: '9px 12px', borderRadius: 8, border: 'none',
+                background: activeTab === tab.id ? 'rgba(255,255,255,.06)' : 'transparent',
+                color: activeTab === tab.id ? '#f1f5f9' : '#475569',
+                fontSize: '.72rem', fontFamily: 'Outfit', fontWeight: activeTab === tab.id ? 700 : 500,
+                cursor: 'pointer', transition: 'all .2s',
+                borderBottom: activeTab === tab.id ? `2px solid ${accent}` : '2px solid transparent',
+              }}>
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* ═══════ TIMELINE TAB ═══════ */}
+          {activeTab === 'timeline' && (
+            <div style={{ position: 'relative', paddingLeft: 28 }}>
+              {/* Timeline line */}
+              <div style={{
+                position: 'absolute', left: 8, top: 6, bottom: 6, width: 2,
+                background: `linear-gradient(180deg, rgba(${accentRgb},.28), rgba(${accentRgb},.05))`,
+                borderRadius: 2,
+              }} />
+
+              {sessions.map((s: any, i: number) => {
+                const chiefComplaint = getChiefComplaint(s)
+                const tags = getSessionTags(s)
+                const dotColors = ['#22d3ee', '#60a5fa', '#f59e0b', '#a78bfa', '#34d399', '#f472b6']
+                const dotColor = dotColors[i % dotColors.length]
+
+                return (
+                  <div key={s.id} style={{
+                    position: 'relative', paddingBottom: i < sessions.length - 1 ? 14 : 0,
+                    animation: 'fadeSlide .4s ease both',
+                    animationDelay: `${i * 60}ms`,
+                    cursor: 'pointer',
+                  }} onClick={() => router.push(`/session/${s.id}`)}>
+                    {/* Dot */}
+                    <div style={{
+                      position: 'absolute', left: -24, top: 14,
+                      width: 10, height: 10, borderRadius: '50%',
+                      background: dotColor, border: `2px solid ${dotColor}`,
+                      boxShadow: `0 0 10px ${dotColor}55`,
+                    }} />
+
+                    {/* Visit card */}
+                    <div style={{
+                      padding: '14px 18px', borderRadius: 12,
+                      background: 'rgba(255,255,255,.018)',
+                      border: '1px solid rgba(255,255,255,.05)',
+                      transition: 'border-color .2s, background .2s',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = `rgba(${accentRgb},.18)`; e.currentTarget.style.background = `rgba(${accentRgb},.025)` }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,.05)'; e.currentTarget.style.background = 'rgba(255,255,255,.018)' }}
+                    >
+                      {/* Date · Department */}
+                      <div style={{ fontFamily: 'JetBrains Mono', fontSize: '.58rem', color: '#64748b', letterSpacing: '.03em', marginBottom: 5 }}>
+                        {format(new Date(s.createdAt), 'dd MMM yyyy')} <span style={{ color: '#334155' }}>·</span> <span style={{ color: '#94a3b8' }}>{s.department.replace(/_/g, ' ')}</span>
+                      </div>
+
+                      {/* Chief complaint — bold title */}
+                      <div style={{
+                        fontFamily: 'Outfit', fontWeight: 700, fontSize: '.92rem',
+                        color: '#e2e8f0', lineHeight: 1.3, marginBottom: tags.length > 0 ? 10 : 0,
+                        letterSpacing: '-.01em',
+                      }}>
+                        {chiefComplaint}
+                      </div>
+
+                      {/* Entity tags */}
+                      {tags.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                          {tags.map((t, j) => (
+                            <span key={j} style={{
+                              padding: '3px 10px', borderRadius: 6,
+                              background: `${t.color}18`, color: t.color,
+                              fontFamily: 'JetBrains Mono', fontSize: '.6rem', fontWeight: 500,
+                            }}>{t.label}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* ═══════ SYMPTOM TRENDS TAB ═══════ */}
+          {activeTab === 'symptoms' && (
+            <div>
+              {allSymptoms.size === 0 ? (
+                <div style={{ textAlign: 'center', padding: '28px 0' }}>
+                  <p style={{ fontFamily: 'JetBrains Mono', fontSize: '.65rem', color: '#334155' }}>No symptoms recorded yet</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {[...allSymptoms.entries()]
+                    .sort((a, b) => b[1].count - a[1].count)
+                    .map(([symptom, data], i) => {
+                      const barWidth = Math.max(20, (data.count / sessions.length) * 100)
+                      const isRecurring = data.count > 1
+                      return (
+                        <div key={symptom} style={{
+                          padding: '10px 14px', borderRadius: 10,
+                          background: 'rgba(255,255,255,.015)', border: '1px solid rgba(255,255,255,.04)',
+                          animation: 'fadeSlide .3s ease both', animationDelay: `${i * 40}ms`,
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span style={{
+                                fontFamily: 'Outfit', fontWeight: 700, fontSize: '.82rem',
+                                color: '#e2e8f0', textTransform: 'capitalize',
+                              }}>{symptom}</span>
+                              {isRecurring && (
+                                <span style={{
+                                  padding: '1px 6px', borderRadius: 4,
+                                  background: '#F8717118', color: '#F87171',
+                                  fontFamily: 'JetBrains Mono', fontSize: '.5rem', fontWeight: 700,
+                                }}>RECURRING</span>
+                              )}
+                            </div>
+                            <span style={{
+                              fontFamily: 'JetBrains Mono', fontSize: '.58rem', color: accent,
+                              fontWeight: 700,
+                            }}>{data.count}×</span>
+                          </div>
+                          {/* Bar */}
+                          <div style={{ height: 3, borderRadius: 2, background: 'rgba(255,255,255,.04)', overflow: 'hidden' }}>
+                            <div style={{
+                              height: '100%', borderRadius: 2, width: `${barWidth}%`,
+                              background: isRecurring
+                                ? 'linear-gradient(90deg, #F87171, #fb923c)'
+                                : `linear-gradient(90deg, ${accent}, rgba(${accentRgb},.4))`,
+                              transition: 'width .6s ease',
+                            }} />
+                          </div>
+                          <div style={{ fontFamily: 'JetBrains Mono', fontSize: '.48rem', color: '#475569', marginTop: 4, letterSpacing: '.03em' }}>
+                            Seen: {data.sessions.join(' → ')}
+                          </div>
+                        </div>
+                      )
+                    })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ═══════ MEDICATIONS TAB ═══════ */}
+          {activeTab === 'medications' && (
+            <div>
+              {allMeds.size === 0 ? (
+                <div style={{ textAlign: 'center', padding: '28px 0' }}>
+                  <p style={{ fontFamily: 'JetBrains Mono', fontSize: '.65rem', color: '#334155' }}>No medications recorded yet</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {[...allMeds.entries()]
+                    .sort((a, b) => b[1].count - a[1].count)
+                    .map(([med, data], i) => (
+                      <div key={med} style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '12px 16px', borderRadius: 10,
+                        background: 'rgba(255,255,255,.015)', border: '1px solid rgba(255,255,255,.04)',
+                        animation: 'fadeSlide .3s ease both', animationDelay: `${i * 40}ms`,
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div style={{
+                            width: 28, height: 28, borderRadius: 8,
+                            background: '#2dd4bf12', border: '1px solid #2dd4bf22',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 15h3" />
+                            </svg>
+                          </div>
+                          <div>
+                            <div style={{ fontFamily: 'Outfit', fontWeight: 700, fontSize: '.82rem', color: '#e2e8f0', textTransform: 'capitalize' }}>{med}</div>
+                            <div style={{ fontFamily: 'JetBrains Mono', fontSize: '.48rem', color: '#475569', marginTop: 2 }}>
+                              Last: {format(new Date(data.lastSeen), 'MMM dd, yyyy')}
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '.9rem', color: '#2dd4bf' }}>{data.count}×</div>
+                          <div style={{ fontFamily: 'JetBrains Mono', fontSize: '.44rem', color: '#475569', marginTop: 1 }}>prescribed</div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ═══════ AI SUMMARY TAB ═══════ */}
+          {activeTab === 'summary' && (
+            <div>
+              {/* Language selector — always visible */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, marginBottom: 16 }}>
+                {[
+                  { key: 'KANNADA' as const, label: 'ಕನ್ನಡ', short: 'ಕ' },
+                  { key: 'ENGLISH' as const, label: 'English', short: 'EN' },
+                  { key: 'HINDI' as const, label: 'हिंदी', short: 'हि' },
+                ].map(lang => (
+                  <button key={lang.key} onClick={() => { setSummaryLang(lang.key); setAiSummary(null); setSummaryError(null) }} style={{
+                    padding: '6px 16px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                    background: summaryLang === lang.key ? `rgba(${accentRgb},.12)` : 'rgba(255,255,255,.02)',
+                    color: summaryLang === lang.key ? accent : '#475569',
+                    fontFamily: 'Outfit', fontSize: '.74rem', fontWeight: summaryLang === lang.key ? 700 : 500,
+                    transition: 'all .2s',
+                    borderBottom: summaryLang === lang.key ? `2px solid ${accent}` : '2px solid transparent',
+                  }}>
+                    <span style={{ marginRight: 4, fontSize: '.8rem' }}>{lang.short}</span> {lang.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Generate button or loading state */}
+              {!aiSummary && !summaryLoading && (
+                <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                  <p style={{ fontFamily: 'Outfit', fontSize: '.82rem', color: '#94a3b8', marginBottom: 16, lineHeight: 1.6 }}>
+                    Generate a comprehensive AI-powered {isHC ? 'health' : 'financial'} summary by analyzing <strong style={{ color: '#e2e8f0' }}>all {sessions.length} {sessions.length === 1 ? 'visit' : 'visits'}</strong> in <strong style={{ color: accent }}>{summaryLang === 'KANNADA' ? 'ಕನ್ನಡ' : summaryLang === 'HINDI' ? 'हिंदी' : 'English'}</strong>.
+                  </p>
+                  {summaryError && (
+                    <div style={{
+                      padding: '8px 14px', borderRadius: 8, marginBottom: 14,
+                      background: 'rgba(248,113,113,.06)', border: '1px solid rgba(248,113,113,.18)',
+                      fontFamily: 'JetBrains Mono', fontSize: '.6rem', color: '#F87171',
+                    }}>{summaryError}</div>
+                  )}
+                  <button
+                    onClick={async () => {
+                      setSummaryLoading(true)
+                      setSummaryError(null)
+                      try {
+                        const res = await fetch('/api/ai/patient-summary', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ sessions, personName, domain, language: summaryLang }),
+                        })
+                        if (!res.ok) {
+                          const err = await res.json()
+                          throw new Error(err.error || 'Failed to generate')
+                        }
+                        const { summary } = await res.json()
+                        setAiSummary(summary)
+                      } catch (e: any) {
+                        setSummaryError(e.message || 'Something went wrong')
+                      } finally {
+                        setSummaryLoading(false)
+                      }
+                    }}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 9,
+                      padding: '12px 28px', borderRadius: 12,
+                      background: `linear-gradient(135deg, rgba(${accentRgb},.14), rgba(${accentRgb},.05))`,
+                      border: `1px solid rgba(${accentRgb},.2)`,
+                      color: accent, fontSize: '.82rem', fontFamily: 'Outfit', fontWeight: 700,
+                      cursor: 'pointer', position: 'relative', overflow: 'hidden',
+                      boxShadow: `0 4px 16px rgba(0,0,0,.3), 0 0 20px rgba(${accentRgb},.06)`,
+                      transition: 'all .25s',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = `0 8px 24px rgba(0,0,0,.4),0 0 28px rgba(${accentRgb},.1)` }}
+                    onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = `0 4px 16px rgba(0,0,0,.3),0 0 20px rgba(${accentRgb},.06)` }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                    Generate AI Summary
+                  </button>
+                </div>
+              )}
+
+              {/* Loading state */}
+              {summaryLoading && (
+                <div style={{ textAlign: 'center', padding: '32px 0' }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: '50%',
+                    border: `3px solid rgba(${accentRgb},.12)`, borderTopColor: accent,
+                    animation: 'spin .8s linear infinite',
+                    margin: '0 auto 14px',
+                  }} />
+                  <p style={{ fontFamily: 'Outfit', fontSize: '.82rem', color: '#94a3b8', marginBottom: 4 }}>
+                    Analyzing {sessions.length} {sessions.length === 1 ? 'visit' : 'visits'}...
+                  </p>
+                  <p style={{ fontFamily: 'JetBrains Mono', fontSize: '.56rem', color: '#334155', letterSpacing: '.04em' }}>
+                    AI is reviewing all reports, symptoms, and medications
+                  </p>
+                </div>
+              )}
+
+              {/* Generated summary */}
+              {aiSummary && !summaryLoading && (
+                <div>
+                  {/* Header */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                      </svg>
+                      <span style={{ fontFamily: 'Outfit', fontWeight: 700, fontSize: '.82rem', color: '#e2e8f0' }}>
+                        AI-Generated {isHC ? 'Patient' : 'Client'} Summary
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => { setAiSummary(null); setSummaryError(null) }}
+                      style={{
+                        padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,.08)',
+                        background: 'rgba(255,255,255,.02)', color: '#64748b',
+                        fontFamily: 'JetBrains Mono', fontSize: '.52rem', cursor: 'pointer',
+                        transition: 'all .2s',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = `rgba(${accentRgb},.2)`; e.currentTarget.style.color = accent }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,.08)'; e.currentTarget.style.color = '#64748b' }}
+                    >
+                      ↻ Regenerate
+                    </button>
+                  </div>
+
+                  {/* Summary content */}
+                  <div
+                    className="ai-summary-content"
+                    style={{
+                      padding: '18px 20px', borderRadius: 12,
+                      background: `linear-gradient(135deg, rgba(${accentRgb},.03), rgba(${accent2Rgb},.015))`,
+                      border: `1px solid rgba(${accentRgb},.08)`,
+                    }}
+                    dangerouslySetInnerHTML={{ __html: aiSummary }}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </StaticCard>
+    </div>
+  )
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function PersonLookupPage() {
   const router = useRouter()
@@ -463,6 +969,14 @@ export default function PersonLookupPage() {
         @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
         @keyframes slideRight{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
         @keyframes progressFill{from{width:0}to{width:var(--target-width)}}
+
+        /* AI Summary content styling */
+        .ai-summary-content h3{font-family:'Outfit',sans-serif;font-weight:700;font-size:.88rem;color:#e2e8f0;margin:18px 0 8px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,.04);}
+        .ai-summary-content h3:first-child{margin-top:0;}
+        .ai-summary-content p{font-family:'Outfit',sans-serif;font-size:.78rem;color:#94a3b8;line-height:1.65;margin:0 0 8px;}
+        .ai-summary-content ul{margin:4px 0 12px 16px;padding:0;}
+        .ai-summary-content li{font-family:'Outfit',sans-serif;font-size:.76rem;color:#94a3b8;line-height:1.6;margin-bottom:4px;}
+        .ai-summary-content strong{color:#e2e8f0;font-weight:700;}
 
         .pl-fade{animation:fadeSlide .5s cubic-bezier(.23,1,.32,1) both;}
         .pl-d1{animation-delay:.05s}.pl-d2{animation-delay:.12s}.pl-d3{animation-delay:.19s}.pl-d4{animation-delay:.26s}.pl-d5{animation-delay:.33s}
@@ -588,11 +1102,11 @@ export default function PersonLookupPage() {
 
           {/* Heading */}
           <h1 style={{ fontFamily: 'Outfit', fontWeight: 900, fontSize: 'clamp(1.9rem,3.2vw,2.6rem)', color: '#f8fafc', lineHeight: 1.07, letterSpacing: '-.026em', marginBottom: 10 }}>
-            {isHC ? 'Patient' : 'Client'}{' '}
-            <span style={{ background: `linear-gradient(135deg,${accent},${accent2})`, backgroundSize: '200% 200%', animation: 'gradShift 5s ease infinite', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Lookup</span>
+            <LanguageCycler texts={[isHC ? 'Patient' : 'Client', isHC ? 'ರೋಗಿ' : 'ಗ್ರಾಹಕ']} interval={3500} />{' '}
+            <span style={{ background: `linear-gradient(135deg,${accent},${accent2})`, backgroundSize: '200% 200%', animation: 'gradShift 5s ease infinite', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}><LanguageCycler texts={['Lookup', 'ಹುಡುಕಾಟ']} interval={3500} /></span>
           </h1>
           <p style={{ fontSize: '.9rem', lineHeight: 1.72, color: '#64748b', maxWidth: 460, marginBottom: 18 }}>
-            Search by mobile number to retrieve an existing {isHC ? 'patient' : 'client'} record, or register a new profile in seconds.
+            <LanguageCycler texts={[`Search by mobile number to retrieve an existing ${isHC ? 'patient' : 'client'} record, or register a new profile in seconds.`, `ಮೊಬೈಲ್ ಸಂಖ್ಯೆಯಿಂದ ಅಸ್ತಿತ್ವದಲ್ಲಿರುವ ${isHC ? 'ರೋಗಿ' : 'ಗ್ರಾಹಕ'} ದಾಖಲೆಯನ್ನು ಹುಡುಕಿ, ಅಥವಾ ಹೊಸ ಪ್ರೋಫೈಲ್ ರಚಿಸಿ.`]} interval={3500} />
           </p>
 
          
@@ -602,15 +1116,15 @@ export default function PersonLookupPage() {
         {/* ══ SEARCH CARD ══ */}
         <div className="pl-fade pl-d2" style={{ marginBottom: 16 }}>
           <StaticCard accentRgb={accentRgb} accent2Rgb={accent2Rgb}>
-            <div style={{ padding: '30px 30px 28px' }}>npm run e
+            <div style={{ padding: '30px 30px 28px' }}>
 
               {/* Card header */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, position: 'relative', zIndex: 4 }}>
-                <span className="pl-sec-label" style={{ color: accent }}>Phone Search</span>
+                <span className="pl-sec-label" style={{ color: accent }}><LanguageCycler texts={['Phone Search', 'ಫೋನ್ ಹುಡುಕಾಟ']} interval={3500} /></span>
                 <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg,rgba(${accentRgb},.13),transparent)` }} />
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 9px', borderRadius: 100, background: `rgba(${accentRgb},.04)`, border: `1px solid rgba(${accentRgb},.14)` }}>
                   <div style={{ width: 4, height: 4, borderRadius: '50%', background: accent, boxShadow: `0 0 5px ${accent}`, animation: 'blink 1.8s infinite' }} />
-                  <span style={{ fontFamily: 'JetBrains Mono', fontSize: '.54rem', color: accent, letterSpacing: '.07em', fontWeight: 600 }}>READY</span>
+                  <span style={{ fontFamily: 'JetBrains Mono', fontSize: '.54rem', color: accent, letterSpacing: '.07em', fontWeight: 600 }}><LanguageCycler texts={['READY', 'ಸಿದ್ಧ']} interval={3500} /></span>
                 </div>
               </div>
 
@@ -627,9 +1141,9 @@ export default function PersonLookupPage() {
                 </div>
                 <button className="pl-btn-search" onClick={searchPerson} disabled={loading || phone.length < 10} style={{ marginBottom: 0 }}>
                   {loading ? (
-                    <><span style={{ width: 13, height: 13, border: `2px solid rgba(${accentRgb},.2)`, borderTopColor: accent, borderRadius: '50%', animation: 'spin .65s linear infinite', flexShrink: 0 }} />Searching</>
+                    <><span style={{ width: 13, height: 13, border: `2px solid rgba(${accentRgb},.2)`, borderTopColor: accent, borderRadius: '50%', animation: 'spin .65s linear infinite', flexShrink: 0 }} /><LanguageCycler texts={['Searching', 'ಹುಡುಕುತ್ತಿದೆ']} interval={3500} /></>
                   ) : (
-                    <>Search <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg></>
+                    <><LanguageCycler texts={['Search', 'ಹುಡುಕಿ']} interval={3500} /> <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg></>
                   )}
                 </button>
               </div>
@@ -666,7 +1180,7 @@ export default function PersonLookupPage() {
 
                 {/* Section label */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, position: 'relative', zIndex: 4 }}>
-                  <span className="pl-sec-label" style={{ color: '#f59e0b' }}>New {isHC ? 'Patient' : 'Client'} Record</span>
+                  <span className="pl-sec-label" style={{ color: '#f59e0b' }}><LanguageCycler texts={[`New ${isHC ? 'Patient' : 'Client'} Record`, `ಹೊಸ ${isHC ? 'ರೋಗಿ' : 'ಗ್ರಾಹಕ'} ದಾಖಲೆ`]} interval={3500} /></span>
                   <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg,rgba(245,158,11,.14),transparent)' }} />
                 </div>
 
@@ -697,7 +1211,7 @@ export default function PersonLookupPage() {
                 <button className="pl-btn-amber" onClick={createPerson} disabled={!newPerson.name || createLoading} style={{ position: 'relative', zIndex: 4 }}>
                   {createLoading
                     ? <><span style={{ width: 13, height: 13, border: '2px solid rgba(245,158,11,.2)', borderTopColor: '#f59e0b', borderRadius: '50%', animation: 'spin .65s linear infinite', flexShrink: 0 }} />Creating…</>
-                    : <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>Create {isHC ? 'Patient' : 'Client'} Record</>}
+                    : <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg><LanguageCycler texts={[`Create ${isHC ? 'Patient' : 'Client'} Record`, `${isHC ? 'ರೋಗಿ' : 'ಗ್ರಾಹಕ'} ದಾಖಲೆ ರಚಿಸಿ`]} interval={3500} /></>}
                 </button>
               </div>
             </StaticCard>
@@ -770,12 +1284,26 @@ export default function PersonLookupPage() {
                 <div style={{ padding: '0 30px 30px', position: 'relative', zIndex: 4 }}>
                   <button className="pl-btn-cta" onClick={startSession} disabled={sessionLoading}>
                     {sessionLoading
-                      ? <><span style={{ width: 15, height: 15, border: '2px solid rgba(0,0,0,.2)', borderTopColor: '#000', borderRadius: '50%', animation: 'spin .6s linear infinite', flexShrink: 0 }} />Launching Session…</>
-                      : <>Start New Session <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3" /></svg></>}
+                      ? <><span style={{ width: 15, height: 15, border: '2px solid rgba(0,0,0,.2)', borderTopColor: '#000', borderRadius: '50%', animation: 'spin .6s linear infinite', flexShrink: 0 }} /><LanguageCycler texts={['Launching Session…', 'ಸೆಷನ್ ಪ್ರಾರಂಭಿಸಲಾಗುತ್ತಿದೆ…']} interval={3500} /></>
+                      : <><LanguageCycler texts={['Start New Session', 'ಹೊಸ ಸೆಷನ್ ಪ್ರಾರಂಭಿಸಿ']} interval={3500} /> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3" /></svg></>}
                   </button>
                 </div>
               </StaticCard>
             </div>
+
+            {/* Health / Finance Timeline */}
+            {person.sessions?.length > 0 && (
+              <HealthTimeline
+                sessions={person.sessions}
+                accent={accent}
+                accentRgb={accentRgb}
+                accent2Rgb={accent2Rgb}
+                isHC={isHC}
+                router={router}
+                personName={person.name || 'Unknown'}
+                domain={domain || 'HEALTHCARE'}
+              />
+            )}
 
             {/* Session History */}
             {person.sessions?.length > 0 && (
@@ -784,7 +1312,7 @@ export default function PersonLookupPage() {
                   <div style={{ padding: '28px 28px 24px', position: 'relative', zIndex: 4 }}>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
-                      <span className="pl-sec-label" style={{ color: accent }}>Session History</span>
+                      <span className="pl-sec-label" style={{ color: accent }}><LanguageCycler texts={['Session History', 'ಸೆಷನ್ ಇತಿಹಾಸ']} interval={3500} /></span>
                       <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg,rgba(${accentRgb},.12),transparent)` }} />
                       <div style={{ padding: '3px 10px', borderRadius: 100, background: `rgba(${accentRgb},.05)`, border: `1px solid rgba(${accentRgb},.14)` }}>
                         <span style={{ fontFamily: 'JetBrains Mono', fontSize: '.56rem', color: accent, fontWeight: 700 }}>{person.sessions.length}</span>

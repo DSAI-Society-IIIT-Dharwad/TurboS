@@ -29,7 +29,10 @@ export async function GET(
             department: true,
             status: true,
             approved: true,
-            createdAt: true
+            createdAt: true,
+            nerEntities: true,
+            extractedData: true,
+            finalReport: true,
           }
         }
       }

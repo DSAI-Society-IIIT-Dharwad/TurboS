@@ -528,13 +528,13 @@ function PatientPortalSection() {
         <Reveal style={{ textAlign: 'center', marginBottom: 64 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: '.66rem', fontWeight: 600, letterSpacing: '.18em', textTransform: 'uppercase' as const, color: '#818cf8', marginBottom: 12, fontFamily: 'JetBrains Mono,monospace' }}>
             <span style={{ width: 20, height: 1, background: 'linear-gradient(90deg,#818cf8,transparent)', display: 'inline-block' }} />
-            Patient Access
+            <LanguageCycler texts={['Patient Access', 'ರೋಗಿ ಪ್ರವೇಶ']} interval={3500} />
           </div>
           <h2 style={{ fontFamily: 'Outfit,sans-serif', fontSize: 'clamp(1.9rem,3.2vw,3rem)', fontWeight: 900, color: '#f8fafc', lineHeight: 1.08, marginBottom: 14, letterSpacing: '-.02em' }}>
-            Your health, in your hands.
+            <LanguageCycler texts={['Your health, in your hands.', 'ನಿಮ್ಮ ಆರೋಗ್ಯ, ನಿಮ್ಮ ಕೈಯಲ್ಲಿ.']} interval={3500} />
           </h2>
           <p style={{ fontSize: '.95rem', lineHeight: 1.8, color: '#64748b', maxWidth: 480, margin: '0 auto' }}>
-            Patients can access their reports, medication schedules, and smart summaries — anytime, in their language.
+            <LanguageCycler texts={['Patients can access their reports, medication schedules, and smart summaries — anytime, in their language.', 'ರೋಗಿಗಳು ತಮ್ಮ ವರದಿಗಳು, ಔಷಧಿ ವೇಳಾಪಟ್ಟಿ, ಮತ್ತು ಸಾರಾಂಶಗಳನ್ನು ನೋಡಬಹುದು.']} interval={3500} />
           </p>
         </Reveal>
 
@@ -571,11 +571,11 @@ function PatientPortalSection() {
               }}
               onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.transform = 'translateY(-3px) scale(1.03)'; (e.currentTarget as HTMLAnchorElement).style.boxShadow = '0 0 50px rgba(99,102,241,.6), 0 20px 40px rgba(0,0,0,.6)' }}
               onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.transform = 'none'; (e.currentTarget as HTMLAnchorElement).style.boxShadow = '0 0 30px rgba(99,102,241,.4), 0 12px 28px rgba(0,0,0,.5)' }}>
-              🏥 Access Patient Portal
+              🏥 <LanguageCycler texts={['Access Patient Portal', 'ರೋಗಿ ಪೋರ್ಟಲ್ ಪ್ರವೇಶಿಸಿ']} interval={3500} />
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
             </Link>
             <p style={{ fontSize: '.78rem', color: '#374151', marginTop: 14, fontFamily: 'JetBrains Mono,monospace' }}>
-              No app download required · Works on any device
+              <LanguageCycler texts={['No app download required · Works on any device', 'ಆ್ಯಪ್ ಡೌನ್‌ಲೋಡ್ ಅಗತ್ಯವಿಲ್ಲ · ಯಾವುದೇ ಸಾಧನದಲ್ಲಿ ಕೆಲಸ ಮಾಡುತ್ತದೆ']} interval={3500} />
             </p>
           </div>
         </Reveal>
@@ -822,6 +822,35 @@ function BackgroundScene() {
   )
 }
 
+// ─── Language Cycler ────────────────────────────────────────────────────────────
+function LanguageCycler({ texts, interval = 3000, style = {} }: { texts: string[]; interval?: number; style?: React.CSSProperties }) {
+  const [index, setIndex] = useState(0)
+  const [visible, setVisible] = useState(true)
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setVisible(false)
+      setTimeout(() => {
+        setIndex(i => (i + 1) % texts.length)
+        setVisible(true)
+      }, 400)
+    }, interval)
+    return () => clearInterval(timer)
+  }, [texts.length, interval])
+
+  return (
+    <span style={{
+      ...style,
+      display: 'inline-block',
+      transition: 'opacity 0.4s ease, transform 0.4s ease',
+      opacity: visible ? 1 : 0,
+      transform: visible ? 'translateY(0)' : 'translateY(8px)',
+    }}>
+      {texts[index]}
+    </span>
+  )
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function LandingPage() {
   const cursorRef = useRef<HTMLDivElement>(null)
@@ -1002,10 +1031,10 @@ export default function LandingPage() {
               <a key={l} href={h} className="nav-link">{l}</a>
             ))}
             {/* Patient Portal nav link restored from v1 */}
-            <Link href="/patient" className="btn-patient" style={{ padding:'6px 16px',fontSize:'.72rem' }}>🏥 Patient Portal</Link>
+            <Link href="/patient" className="btn-patient" style={{ padding:'6px 16px',fontSize:'.72rem' }}>🏥 <LanguageCycler texts={['Patient Portal', 'ರೋಗಿ ಪೋರ್ಟಲ್']} interval={3500} /></Link>
           </div>
           <Link href="/login" className="btn-main" style={{ padding:'9px 24px',fontSize:'.78rem' }}>
-            Doctor Login
+            <LanguageCycler texts={['Doctor Login', 'ವೈದ್ಯರ ಲಾಗಿನ್']} interval={3500} />
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </Link>
         </nav>
@@ -1018,23 +1047,29 @@ export default function LandingPage() {
             <div>
               <div className="holo-badge fade-up" style={{ marginBottom:28 }}>
                 <span style={{ width:6,height:6,borderRadius:'50%',background:'#22d3ee',boxShadow:'0 0 10px #22d3ee',animation:'blink2 2s infinite',flexShrink:0 }}/>
-                AI-Powered Voice Intelligence
+                <LanguageCycler texts={['AI-Powered Voice Intelligence', 'AI-ಆಧಾರಿತ ಧ್ವನಿ ಬುದ್ಧಿಮತ್ತೆ']} interval={3500} />
               </div>
               <h1 className="fade-up d1" style={{ fontFamily:'Outfit,sans-serif',fontSize:'clamp(2.6rem,4.5vw,4.4rem)',fontWeight:900,lineHeight:1.04,letterSpacing:'-.03em',color:'#f8fafc',marginBottom:20 }}>
-                The AI that listens<br/>
+                <LanguageCycler texts={['The AI that listens', 'ಕೇಳುವ AI']} interval={3500} /><br/>
                 <span style={{ background:'linear-gradient(135deg,#22d3ee 0%,#818cf8 45%,#34d399 100%)',backgroundSize:'200% 200%',animation:'gradShift 5s ease infinite',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent' }}>
-                  while you consult.
+                  <LanguageCycler texts={['while you consult.', 'ನೀವು ಸಮಾಲೋಚನೆ ಮಾಡುವಾಗ']} interval={3500} />
                 </span>
               </h1>
               <p className="fade-up d2" style={{ fontSize:'.98rem',lineHeight:1.82,color:'#64748b',maxWidth:480,marginBottom:40 }}>
-                Purpose-built for Healthcare and Finance professionals. Speak in any language — AI transcribes, extracts critical entities, and delivers structured reports in seconds.
+                <LanguageCycler
+                  texts={[
+                    'Purpose-built for Healthcare and Finance professionals. Speak in any language — AI transcribes, extracts critical entities, and delivers structured reports in seconds.',
+                    'ಆರೋಗ್ಯ ಮತ್ತು ಹಣಕಾಸು ವೃತ್ತಿಪರರಿಗಾಗಿ ರಚಿಸಲಾಗಿದೆ. ಯಾವುದೇ ಭಾಷೆಯಲ್ಲಿ ಮಾತನಾಡಿ — AI ಸೆಕೆಂಡುಗಳಲ್ಲಿ ವರದಿಗಳನ್ನು ನೀಡುತ್ತದೆ.',
+                  ]}
+                  interval={3500}
+                />
               </p>
               <div className="fade-up d3" style={{ display:'flex',gap:14,flexWrap:'wrap',marginBottom:32 }}>
                 <Link href="/login" className="btn-main">
-                  Doctor Login
+                  <LanguageCycler texts={['Doctor Login', 'ವೈದ್ಯರ ಲಾಗಿನ್']} interval={3500} />
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                 </Link>
-                <Link href="#domains" className="btn-ghost">See It In Action</Link>
+                <Link href="#domains" className="btn-ghost"><LanguageCycler texts={['See It In Action', 'ಕ್ರಿಯೆಯಲ್ಲಿ ನೋಡಿ']} interval={3500} /></Link>
               </div>
 
               {/* ── Patient Portal CTA in hero (from v1) ─────────────────── */}
@@ -1043,13 +1078,17 @@ export default function LandingPage() {
                   <span style={{ fontSize:18 }}>🏥</span>
                 </div>
                 <div style={{ flex:1 }}>
-                  <p style={{ fontSize:'.82rem',fontWeight:700,color:'#c7d2fe',marginBottom:2 }}>Are you a patient?</p>
-                  <p style={{ fontSize:'.75rem',color:'#6b7280' }}>View your reports, medications, and summaries</p>
+                  <p style={{ fontSize:'.82rem',fontWeight:700,color:'#c7d2fe',marginBottom:2 }}>
+                    <LanguageCycler texts={['Are you a patient?', 'ನೀವು ರೋಗಿಯೇ?']} interval={3500} />
+                  </p>
+                  <p style={{ fontSize:'.75rem',color:'#6b7280' }}>
+                    <LanguageCycler texts={['View your reports, medications, and summaries', 'ನಿಮ್ಮ ವರದಿಗಳು, ಔಷಧಿಗಳು ನೋಡಿ']} interval={3500} />
+                  </p>
                 </div>
                 <Link href="/patient" style={{ display:'inline-flex',alignItems:'center',gap:6,padding:'8px 16px',borderRadius:100,background:'linear-gradient(135deg,#6366f1,#4f46e5)',color:'#fff',fontSize:'.75rem',fontWeight:700,textDecoration:'none',fontFamily:'Outfit,sans-serif',flexShrink:0,boxShadow:'0 4px 12px rgba(99,102,241,.3)',transition:'transform .2s' }}
                   onMouseEnter={e=>(e.currentTarget as HTMLAnchorElement).style.transform='scale(1.05)'}
                   onMouseLeave={e=>(e.currentTarget as HTMLAnchorElement).style.transform='none'}>
-                  Open Portal →
+                  <LanguageCycler texts={['Open Portal →', 'ಪೋರ್ಟಲ್ ತೆರೆಯಿರಿ →']} interval={3500} />
                 </Link>
               </div>
 
@@ -1141,12 +1180,12 @@ export default function LandingPage() {
 
           <div style={{ maxWidth:1380,margin:'0 auto',padding:'0 56px' }}>
             <Reveal style={{ textAlign:'center',marginBottom:80 }}>
-              <div className="sec-label" style={{ justifyContent:'center' }}>Capabilities</div>
+              <div className="sec-label" style={{ justifyContent:'center' }}><LanguageCycler texts={['Capabilities', 'ಸಾಮರ್ಥ್ಯಗಳು']} interval={3500} /></div>
               <h2 style={{ fontFamily:'Outfit,sans-serif',fontSize:'clamp(1.9rem,3.2vw,3rem)',fontWeight:900,color:'#f8fafc',lineHeight:1.08,marginBottom:16,letterSpacing:'-.02em' }}>
-                Enterprise AI built for<br/>
-                <span style={{ background:'linear-gradient(135deg,#22d3ee,#818cf8)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent' }}>clinical precision</span>
+                <LanguageCycler texts={['Enterprise AI built for', 'ವೃತ್ತಿಪರ AI ರಚಿಸಲಾಗಿದೆ']} interval={3500} /><br/>
+                <span style={{ background:'linear-gradient(135deg,#22d3ee,#818cf8)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent' }}><LanguageCycler texts={['clinical precision', 'ವೈದ್ಯಕೀಯ ನಿಖರತೆ']} interval={3500} /></span>
               </h2>
-              <p style={{ fontSize:'.95rem',lineHeight:1.8,color:'#64748b',maxWidth:500,margin:'0 auto' }}>Every feature engineered to remove friction, eliminate manual work, and deliver trusted documentation.</p>
+              <p style={{ fontSize:'.95rem',lineHeight:1.8,color:'#64748b',maxWidth:500,margin:'0 auto' }}><LanguageCycler texts={['Every feature engineered to remove friction, eliminate manual work, and deliver trusted documentation.', 'ಪ್ರತಿ ವೈಶಿಷ್ಟ್ಯವನ್ನು ಘರ್ಷಣೆ ತೆಗೆದು, ವಿಶ್ವಸನೀಯ ದಾಖಲೆಗಳನ್ನು ನೀಡಲು ರಚಿಸಲಾಗಿದೆ.']} interval={3500} /></p>
             </Reveal>
 
             <div className="feat-grid" style={{ display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:20,marginBottom:20 }}>
@@ -1202,13 +1241,13 @@ export default function LandingPage() {
 
           <div style={{ maxWidth: 1380, margin: '0 auto', padding: '0 56px', position: 'relative', zIndex: 1 }}>
             <Reveal style={{ textAlign: 'center', marginBottom: 32 }}>
-              <div className="sec-label" style={{ justifyContent: 'center' }}>Specialisations</div>
+              <div className="sec-label" style={{ justifyContent: 'center' }}><LanguageCycler texts={['Specialisations', 'ವಿಶೇಷತೆಗಳು']} interval={3500} /></div>
               <h2 style={{ fontFamily: 'Outfit,sans-serif', fontSize: 'clamp(2rem,3.6vw,3.3rem)', fontWeight: 900, color: '#f8fafc', lineHeight: 1.06, marginBottom: 18, letterSpacing: '-.025em' }}>
-                Two Domains.<br />
-                <span style={{ background: 'linear-gradient(135deg,#22d3ee,#818cf8,#34d399)', backgroundSize: '200% 200%', animation: 'gradShift 5s ease infinite', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontStyle: 'italic' }}>One Unified Engine.</span>
+                <LanguageCycler texts={['Two Domains.', 'ಎರಡು ಕ್ಷೇತ್ರಗಳು.']} interval={3500} /><br />
+                <span style={{ background: 'linear-gradient(135deg,#22d3ee,#818cf8,#34d399)', backgroundSize: '200% 200%', animation: 'gradShift 5s ease infinite', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontStyle: 'italic' }}><LanguageCycler texts={['One Unified Engine.', 'ಒಂದು ಏಕೀಕೃತ ಎಂಜಿನ್.']} interval={3500} /></span>
               </h2>
               <p style={{ fontSize: '.95rem', lineHeight: 1.8, color: '#64748b', maxWidth: 520, margin: '0 auto' }}>
-                Purpose-built AI pipelines for each domain — same elegant interface, specialised intelligence underneath.
+                <LanguageCycler texts={['Purpose-built AI pipelines for each domain — same elegant interface, specialised intelligence underneath.', 'ಪ್ರತಿ ಕ್ಷೇತ್ರಕ್ಕೆ ಉದ್ದೇಶಪೂರ್ವಕವಾಗಿ ರಚಿಸಲಾದ AI — ಒಂದೇ ಸುಂದರ ಇಂಟರ್ಫೇಸ್, ವಿಶೇಷ ಬುದ್ಧಿಮತ್ತೆ.']} interval={3500} />
               </p>
             </Reveal>
 
@@ -1278,10 +1317,10 @@ export default function LandingPage() {
           <div style={{ position:'absolute',inset:0,background:'radial-gradient(ellipse at 50% 50%,rgba(34,211,238,.03),transparent 70%)',pointerEvents:'none' }}/>
           <div style={{ maxWidth:1380,margin:'0 auto',padding:'0 56px',position:'relative',zIndex:1 }}>
             <Reveal style={{ textAlign:'center',marginBottom:84 }}>
-              <div className="sec-label" style={{ justifyContent:'center' }}>Workflow</div>
+              <div className="sec-label" style={{ justifyContent:'center' }}><LanguageCycler texts={['Workflow', 'ಕಾರ್ಯವಿಧಾನ']} interval={3500} /></div>
               <h2 style={{ fontFamily:'Outfit,sans-serif',fontSize:'clamp(1.9rem,3.2vw,3rem)',fontWeight:900,color:'#f8fafc',lineHeight:1.08,marginBottom:14,letterSpacing:'-.02em' }}>
-                Voice to report<br/>
-                <span style={{ background:'linear-gradient(135deg,#22d3ee,#818cf8)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent' }}>in under two minutes.</span>
+                <LanguageCycler texts={['Voice to report', 'ಧ್ವನಿಯಿಂದ ವರದಿಗೆ']} interval={3500} /><br/>
+                <span style={{ background:'linear-gradient(135deg,#22d3ee,#818cf8)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent' }}><LanguageCycler texts={['in under two minutes.', 'ಎರಡು ನಿಮಿಷದಲ್ಲಿ.']} interval={3500} /></span>
               </h2>
             </Reveal>
             <div className="steps-grid" style={{ display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:0,position:'relative' }}>
@@ -1315,10 +1354,10 @@ export default function LandingPage() {
           </div>
           <div style={{ maxWidth:1380,margin:'0 auto',padding:'0 56px',position:'relative',zIndex:1 }}>
             <Reveal style={{ textAlign:'center',marginBottom:68 }}>
-              <div className="sec-label" style={{ justifyContent:'center' }}>Impact</div>
+              <div className="sec-label" style={{ justifyContent:'center' }}><LanguageCycler texts={['Impact', 'ಪರಿಣಾಮ']} interval={3500} /></div>
               <h2 style={{ fontFamily:'Outfit,sans-serif',fontSize:'clamp(1.9rem,3.2vw,3rem)',fontWeight:900,color:'#f8fafc',lineHeight:1.08,letterSpacing:'-.02em' }}>
-                Numbers that define<br/>
-                <span style={{ background:'linear-gradient(135deg,#22d3ee,#818cf8)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent' }}>our standard.</span>
+                <LanguageCycler texts={['Numbers that define', 'ಸಂಖ್ಯೆಗಳು ಹೇಳುತ್ತವೆ']} interval={3500} /><br/>
+                <span style={{ background:'linear-gradient(135deg,#22d3ee,#818cf8)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent' }}><LanguageCycler texts={['our standard.', 'ನಮ್ಮ ಗುಣಮಟ್ಟ.']} interval={3500} /></span>
               </h2>
             </Reveal>
             <div className="stats-grid" style={{ display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:18,perspective:1200 }}>
@@ -1334,10 +1373,10 @@ export default function LandingPage() {
           </div>
           <div style={{ maxWidth:1380,margin:'0 auto',padding:'0 56px' }}>
             <Reveal style={{ textAlign:'center',marginBottom:80 }}>
-              <div className="sec-label" style={{ justifyContent:'center' }}>Testimonials</div>
+              <div className="sec-label" style={{ justifyContent:'center' }}><LanguageCycler texts={['Testimonials', 'ಪ್ರಶಂಸೆಗಳು']} interval={3500} /></div>
               <h2 style={{ fontFamily:'Outfit,sans-serif',fontSize:'clamp(1.9rem,3.2vw,3rem)',fontWeight:900,color:'#f8fafc',lineHeight:1.08,marginBottom:14,letterSpacing:'-.02em' }}>
-                Trusted by those who<br/>
-                <span style={{ background:'linear-gradient(135deg,#22d3ee,#818cf8)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent' }}>demand precision.</span>
+                <LanguageCycler texts={['Trusted by those who', 'ನಂಬಿದವರಿಂದ']} interval={3500} /><br/>
+                <span style={{ background:'linear-gradient(135deg,#22d3ee,#818cf8)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent' }}><LanguageCycler texts={['demand precision.', 'ನಿಖರತೆ ಬಯಸುವವರು.']} interval={3500} /></span>
               </h2>
             </Reveal>
             <div className="testi-grid" style={{ display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:20,alignItems:'start' }}>
@@ -1386,20 +1425,20 @@ export default function LandingPage() {
                 <div style={{ position:'absolute',top:20,right:160,opacity:.2 }}><Icosahedron size={60} color="#22d3ee" speed="22s"/></div>
                 <div style={{ position:'absolute',bottom:20,left:160,opacity:.15 }}><Icosahedron size={50} color="#818cf8" speed="18s"/></div>
                 <div style={{ position:'absolute',inset:0,background:'radial-gradient(ellipse at 30% 50%,rgba(34,211,238,.06),transparent 60%),radial-gradient(ellipse at 70% 50%,rgba(129,140,248,.04),transparent 60%)',pointerEvents:'none' }}/>
-                <div className="sec-label" style={{ justifyContent:'center',marginBottom:18 }}>Get Started</div>
+                <div className="sec-label" style={{ justifyContent:'center',marginBottom:18 }}><LanguageCycler texts={['Get Started', 'ಪ್ರಾರಂಭಿಸಿ']} interval={3500} /></div>
                 <h2 style={{ fontFamily:'Outfit,sans-serif',fontSize:'clamp(2rem,3.8vw,3.4rem)',fontWeight:900,color:'#f8fafc',lineHeight:1.06,marginBottom:18,position:'relative',zIndex:1,letterSpacing:'-.025em' }}>
-                  Ready to redefine<br/>your practice?
+                  <LanguageCycler texts={['Ready to redefine', 'ನಿಮ್ಮ ಅಭ್ಯಾಸವನ್ನು']} interval={3500} /><br/><LanguageCycler texts={['your practice?', 'ಮರುವ್ಯಾಖ್ಯಾನಿಸಲು ಸಿದ್ಧರೇ?']} interval={3500} />
                 </h2>
                 <p style={{ fontSize:'.95rem',color:'#64748b',maxWidth:440,margin:'0 auto 44px',lineHeight:1.82,position:'relative',zIndex:1 }}>
-                  Join 500+ healthcare and finance professionals delivering faster, more accurate outcomes with AI-powered voice documentation.
+                  <LanguageCycler texts={['Join 500+ healthcare and finance professionals delivering faster, more accurate outcomes with AI-powered voice documentation.', '500+ ಆರೋಗ್ಯ ಮತ್ತು ಹಣಕಾಸು ವೃತ್ತಿಪರರೋಡನೆ ಸೇರಿ ವೇಗವಾಗಿ ಮತ್ತು ನಿಖರವಾಗಿ AI ಧ್ವನಿ ದಾಖಲೆಗಳನ್ನು ನೀಡಿ.']} interval={3500} />
                 </p>
                 <div style={{ display:'flex',gap:14,justifyContent:'center',flexWrap:'wrap',position:'relative',zIndex:1 }}>
                   <Link href="/login" className="btn-main">
-                    Doctor Login
+                    <LanguageCycler texts={['Doctor Login', 'ವೈದ್ಯರ ಲಾಗಿನ್']} interval={3500} />
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                   </Link>
                   {/* Patient Portal ghost button in CTA (from v1) */}
-                  <Link href="/patient" className="btn-ghost">Patient Portal 🏥</Link>
+                  <Link href="/patient" className="btn-ghost"><LanguageCycler texts={['Patient Portal', 'ರೋಗಿ ಪೋರ್ಟಲ್']} interval={3500} /> 🏥</Link>
                 </div>
               </div>
             </Reveal>
@@ -1423,7 +1462,7 @@ export default function LandingPage() {
                 >{l}</a>
               ))}
               {/* Patient Portal footer link (from v1) */}
-              <Link href="/patient" style={{ fontSize:'.73rem',color:'#6366f1',textDecoration:'none',fontFamily:'JetBrains Mono,monospace' }}>🏥 Patient Portal</Link>
+              <Link href="/patient" style={{ fontSize:'.73rem',color:'#6366f1',textDecoration:'none',fontFamily:'JetBrains Mono,monospace' }}>🏥 <LanguageCycler texts={['Patient Portal', 'ರೋಗಿ ಪೋರ್ಟಲ್']} interval={3500} /></Link>
             </div>
             <p style={{ fontFamily:'JetBrains Mono,monospace',fontSize:'.62rem',color:'#1e293b' }}>© 2026 MediFi Voice · Powered by Groq & Sarvam AI</p>
           </div>

@@ -1,7 +1,7 @@
 // app/api/ai/extract-entities/route.ts
 
 import { NextRequest, NextResponse } from 'next/server'
-import { extractMedicalEntitiesHF } from '@/lib/huggingface/ner'
+import { extractMedicalEntitiesHF, hasSubwordFragments } from '@/lib/huggingface/ner'
 import { extractMedicalEntities as extractWithGroq } from '@/lib/ner/medical-ner'
 import { extractFinanceEntities } from '@/lib/ner/finance-ner'
 
@@ -16,20 +16,26 @@ export async function POST(req: NextRequest) {
     let entities
 
     if (domain === 'FINANCE') {
-      // ── Finance domain: always use Groq ─────────────────────────────────
       console.log('Extracting finance entities with Groq...')
       entities = await extractFinanceEntities(text)
 
     } else {
-      // ── Healthcare domain ────────────────────────────────────────────────
+      // ── Healthcare: HuggingFace first, Groq as fallback ─────────────────
       if (useHuggingFace && process.env.HUGGINGFACE_API_KEY) {
         console.log('Using Hugging Face NER for healthcare...')
         entities = await extractMedicalEntitiesHF(text)
 
-        const hasEntities = Object.values(entities).some((arr: any) => arr.length > 0)
-        if (!hasEntities) {
-          console.log('HF returned empty, falling back to Groq...')
+        const isEmpty = Object.values(entities).every((arr: any) => arr.length === 0)
+        const hasFragments = hasSubwordFragments(entities)
+
+        if (isEmpty || hasFragments) {
+          console.log(
+            isEmpty ? 'HF returned empty' : 'HF returned subword fragments',
+            '— falling back to Groq...'
+          )
           entities = await extractWithGroq(text)
+        } else {
+          console.log('HF extraction successful, skipping Groq.')
         }
       } else {
         console.log('Using Groq NER for healthcare...')
