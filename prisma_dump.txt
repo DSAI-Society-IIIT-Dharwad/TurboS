@@ -1,4 +1,4 @@
-﻿===== C:\Users\HP\TurboS-medifi\prisma\seed.ts =====
+﻿===== C:\Users\Jatin\Desktop\turbos-medifi\prisma\seed.ts =====
 // prisma/seed.ts
 
 import { PrismaClient, Domain, Department } from '@prisma/client'

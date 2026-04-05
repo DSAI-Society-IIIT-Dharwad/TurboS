@@ -16,6 +16,7 @@ import {
 import { useSessionPolling } from '@/lib/hooks/useSessionPolling'
 import { generatePDFClient } from '@/lib/pdf/client-generator'
 
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Message {
   id: string
@@ -1503,6 +1504,8 @@ export default function SessionPage() {
                 {isPatientRecording ? '● REC – click to stop' : `${isPatientLabel} speaks here`}
               </p>
             </div>
+
+
 
             {/* Live Extraction */}
             <div className="dark-card-elevated p-4">
