@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { groq, MODELS } from '@/lib/groq'
 import { extractMedicalEntities } from '@/lib/ner/medical-ner'
+import { hashPII } from '@/lib/hash-pii'
 
 const SECTION_COLORS: Record<string, { dark: string; light: string; icon: string }> = {
   'Differential Diagnosis':     { dark: '#60A5FA', light: '#1d4ed8', icon: '⊕' },
@@ -43,6 +44,8 @@ export async function POST(req: NextRequest) {
       department,
       template,
       personName,
+      personPhone,
+      personEmail,
       language = 'ENGLISH',
     } = await req.json()
 
@@ -150,6 +153,12 @@ Format each section as:
 <h3>Section Name In English</h3>
 <p>explanation text here</p>
 <ul><li>item here</li></ul>
+
+CRITICAL GUARDRAILS:
+- Do NOT provide your own opinions, feedback, or speculative diagnoses beyond what was discussed.
+- Only summarize and structure information that was EXPLICITLY mentioned in the conversation.
+- Never add recommendations that were not discussed by the professional.
+- Do NOT inject your own medical advice or assessments.
 
 ${language !== 'ENGLISH' ? `ABSOLUTE REQUIREMENT — LANGUAGE:
 The <h3> section headings MUST remain in English exactly as listed above.
@@ -417,6 +426,12 @@ Format each section as:
 <h3>Section Name In English</h3>
 <p>detailed analysis here</p>
 <ul><li>specific point here</li></ul>
+
+CRITICAL GUARDRAILS:
+- Do NOT provide your own opinions, feedback, or speculative financial advice beyond what was discussed.
+- Only summarize and structure information that was EXPLICITLY mentioned in the conversation.
+- Never add recommendations that were not discussed by the professional.
+- Do NOT inject your own financial assessments or investment advice.
 
 ${language !== 'ENGLISH' ? `ABSOLUTE REQUIREMENT — LANGUAGE:
 The <h3> section headings MUST remain in English exactly as listed above.
@@ -713,7 +728,14 @@ li { margin-bottom: 4px; line-height: 1.65; }
       }
     }
 
-    return NextResponse.json({ report: finalReport })
+    // Hash PII in the final report for cybersecurity
+    const hashedReport = hashPII(finalReport, {
+      name: personName,
+      phone: personPhone,
+      email: personEmail,
+    })
+
+    return NextResponse.json({ report: hashedReport })
 
   } catch (error: any) {
     console.error('Report generation failed:', error)

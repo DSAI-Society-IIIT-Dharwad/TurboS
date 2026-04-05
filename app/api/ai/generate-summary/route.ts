@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { groqWithFallback } from '@/lib/groq'
 import { prisma } from '@/lib/prisma'
 import crypto from 'crypto'
+import { hashPII, hashName } from '@/lib/hash-pii'
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,6 +15,8 @@ export async function POST(req: NextRequest) {
       domain,
       department,
       personName,
+      personPhone,
+      personEmail,
       transcript,
     } = await req.json()
 
@@ -145,7 +148,7 @@ Return JSON only with these EXACT keys in this EXACT order:
 
     let summary: any = {}
     try {
-      summary = JSON.parse(response.choices[0].message.content!)
+      summary = JSON.parse((response as any).choices[0].message.content!)
     } catch {
       summary = {
         kannada: { mainProblem: 'ಸಾರಾಂಶ ತಯಾರಿಸಲಾಗಲಿಲ್ಲ.', keyFindings: [], medicines: [], doList: [], followUp: 'ದಯವಿಟ್ಟು ವೈದ್ಯರನ್ನು ಭೇಟಿ ಮಾಡಿ.', redFlags: [], encouragement: 'ಆರೋಗ್ಯವಾಗಿರಿ!' },
@@ -163,7 +166,27 @@ Return JSON only with these EXACT keys in this EXACT order:
       } catch (e) { console.error('Failed to update session summary cache', e) }
     }
 
-    return NextResponse.json({ summary })
+    // Hash PII in the summary before returning
+    const personData = { name: personName, phone: personPhone, email: personEmail }
+    const hashSummaryPII = (obj: any): any => {
+      if (!obj || typeof obj !== 'object') return obj
+      const result: any = {}
+      for (const [key, value] of Object.entries(obj)) {
+        if (typeof value === 'string') {
+          result[key] = hashPII(value, personData)
+        } else if (Array.isArray(value)) {
+          result[key] = value.map((v: any) => typeof v === 'string' ? hashPII(v, personData) : v)
+        } else if (typeof value === 'object') {
+          result[key] = hashSummaryPII(value)
+        } else {
+          result[key] = value
+        }
+      }
+      return result
+    }
+    const hashedSummary = hashSummaryPII(summary)
+
+    return NextResponse.json({ summary: hashedSummary })
   } catch (error: any) {
     console.error('Generate summary error:', error)
     return NextResponse.json({ error: 'Failed to generate summary', details: error.message }, { status: 500 })

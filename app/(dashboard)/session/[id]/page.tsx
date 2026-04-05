@@ -22,13 +22,13 @@ interface Message {
   id: string
   speaker: 'doctor' | 'patient'
   originalText: string
-  translations: { ENGLISH: string; HINDI: string; KANNADA: string }
+  translations: { ENGLISH: string; HINDI: string; KANNADA: string; MARATHI: string; TAMIL: string; MALAYALAM: string; TELUGU: string }
   timestamp: Date
 }
 
-type LangKey = 'ENGLISH' | 'HINDI' | 'KANNADA'
-const LANG_LABELS: Record<LangKey, string> = { ENGLISH: 'EN', HINDI: 'हि', KANNADA: 'ಕ' }
-const LANG_CODES: Record<LangKey, string> = { ENGLISH: 'en-IN', HINDI: 'hi-IN', KANNADA: 'kn-IN' }
+type LangKey = 'ENGLISH' | 'HINDI' | 'KANNADA' | 'MARATHI' | 'TAMIL' | 'MALAYALAM' | 'TELUGU'
+const LANG_LABELS: Record<LangKey, string> = { ENGLISH: 'EN', HINDI: 'हि', KANNADA: 'ಕ', MARATHI: 'म', TAMIL: 'த', MALAYALAM: 'മ', TELUGU: 'తె' }
+const LANG_CODES: Record<LangKey, string> = { ENGLISH: 'en-IN', HINDI: 'hi-IN', KANNADA: 'kn-IN', MARATHI: 'mr-IN', TAMIL: 'ta-IN', MALAYALAM: 'ml-IN', TELUGU: 'te-IN' }
 
 const ENTITY_COLORS: Record<string, string> = {
   symptoms: '#60A5FA', medications: '#F472B6', diseases: '#34D399',
@@ -377,6 +377,10 @@ export default function SessionPage() {
   const [loadingQuestions, setLoadingQuestions] = useState(false)
   const [manualQuestion, setManualQuestion]     = useState('')
   const [sendingMessage, setSendingMessage]     = useState(false)
+  const [pastSessionContext, setPastSessionContext] = useState<any>(null)
+
+  // ── Conversation end gate ──────────────────────────────────────────────────
+  const [conversationEnded, setConversationEnded] = useState(false)
 
   // ── Report ────────────────────────────────────────────────────────────────
   const [generating, setGenerating]             = useState(false)
@@ -398,7 +402,7 @@ export default function SessionPage() {
   // ── Patient Summary ─────────────────────────────────────────────────────
   const [showSummary, setShowSummary]             = useState(false)
   const [summary, setSummary]                     = useState<any>(null)
-  const [summaryLang, setSummaryLang]             = useState<LangKey>('KANNADA')
+  const [summaryLang, setSummaryLang]             = useState<LangKey>('ENGLISH')
   const [generatingSummary, setGeneratingSummary] = useState(false)
   const [summaryTtsId, setSummaryTtsId]           = useState<string | null>(null)
 
@@ -473,6 +477,7 @@ export default function SessionPage() {
         return
       }
       setSession(data)
+      if (data.status === 'COMPLETED') setConversationEnded(true)
       if (data.interactions?.length > 0) {
         setMessages(data.interactions.map((i: any) => ({
           id: i.id, speaker: i.speaker, originalText: i.text,
@@ -480,6 +485,10 @@ export default function SessionPage() {
             ENGLISH: i.translated  || i.text,
             HINDI:   i.hindiText   || i.text,
             KANNADA: i.kannadaText || i.text,
+            MARATHI: i.marathiText || i.text,
+            TAMIL:   i.tamilText   || i.text,
+            MALAYALAM: i.malayalamText || i.text,
+            TELUGU:  i.teluguText  || i.text,
           },
           timestamp: new Date(i.timestamp),
         })))
@@ -489,6 +498,20 @@ export default function SessionPage() {
       setReport(data.finalReport          || '')
       if (!data.interactions || data.interactions.length === 0) {
         generateAIQuestions('', data.domain, data.department)
+      }
+
+      // Fetch past session context for AI suggestions
+      if (data.personId) {
+        try {
+          const psRes = await fetch('/api/ai/past-sessions', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ personId: data.personId, domain: data.domain, department: data.department, currentSessionId: sessionId })
+          })
+          if (psRes.ok) {
+            const { pastContext } = await psRes.json()
+            setPastSessionContext(pastContext)
+          }
+        } catch {}
       }
     } catch (err) { console.error('Failed to load session:', err) }
 
@@ -548,10 +571,14 @@ export default function SessionPage() {
         ENGLISH: editingMsgLang === 'ENGLISH' ? editingMsgText : '',
         HINDI:   editingMsgLang === 'HINDI'   ? editingMsgText : '',
         KANNADA: editingMsgLang === 'KANNADA' ? editingMsgText : '',
+        MARATHI: editingMsgLang === 'MARATHI' ? editingMsgText : '',
+        TAMIL:   editingMsgLang === 'TAMIL'   ? editingMsgText : '',
+        MALAYALAM: editingMsgLang === 'MALAYALAM' ? editingMsgText : '',
+        TELUGU:  editingMsgLang === 'TELUGU'  ? editingMsgText : '',
       }
 
       // Translate to the other two languages
-      const otherLangs = (['ENGLISH', 'HINDI', 'KANNADA'] as LangKey[]).filter(l => l !== editingMsgLang)
+      const otherLangs = (['ENGLISH', 'HINDI', 'KANNADA', 'MARATHI', 'TAMIL', 'MALAYALAM', 'TELUGU'] as LangKey[]).filter(l => l !== editingMsgLang)
 
       const translationResults = await Promise.allSettled(
         otherLangs.map(async (targetLang) => {
@@ -579,6 +606,10 @@ export default function SessionPage() {
           ENGLISH: translations.ENGLISH || editingMsgText,
           HINDI:   translations.HINDI   || editingMsgText,
           KANNADA: translations.KANNADA || editingMsgText,
+          MARATHI: translations.MARATHI || editingMsgText,
+          TAMIL:   translations.TAMIL   || editingMsgText,
+          MALAYALAM: translations.MALAYALAM || editingMsgText,
+          TELUGU:  translations.TELUGU  || editingMsgText,
         }
         // Keep the edited language's exact text (don't overwrite with round-trip translation)
         newTranslations[editingMsgLang] = editingMsgText
@@ -592,7 +623,7 @@ export default function SessionPage() {
         return {
           ...m,
           originalText: editingMsgLang === 'ENGLISH' ? editingMsgText : m.originalText,
-          translations: newTranslations as { ENGLISH: string; HINDI: string; KANNADA: string },
+          translations: newTranslations as { ENGLISH: string; HINDI: string; KANNADA: string; MARATHI: string; TAMIL: string; MALAYALAM: string; TELUGU: string },
         }
       }))
 
@@ -610,7 +641,7 @@ export default function SessionPage() {
       // FIX 2: Re-extract entities from updated conversation
       const updatedMessages = messagesRef.current.map(m => {
         if (m.id !== msgId) return m
-        return { ...m, translations: newTranslations as { ENGLISH: string; HINDI: string; KANNADA: string } }
+        return { ...m, translations: newTranslations as { ENGLISH: string; HINDI: string; KANNADA: string; MARATHI: string; TAMIL: string; MALAYALAM: string; TELUGU: string } }
       })
 
       const ctx = updatedMessages
@@ -745,7 +776,7 @@ export default function SessionPage() {
     try {
       const res = await fetch('/api/ai/suggest-questions', {
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ context, messages: messagesRef.current.map(m => ({ speaker: m.speaker, text: m.translations.ENGLISH })), domain, department, extractedData, nerEntities })
+        body: JSON.stringify({ context, messages: messagesRef.current.map(m => ({ speaker: m.speaker, text: m.translations.ENGLISH })), domain, department, extractedData, nerEntities, pastSessionContext })
       })
       if (res.ok) { const { questions } = await res.json(); setAiQuestions(questions || []) }
     } catch (err) { console.error(err) }
@@ -756,7 +787,7 @@ export default function SessionPage() {
     const safe = translations || {}
     const newMsg: Message = {
       id: Date.now().toString(), speaker, originalText,
-      translations: { ENGLISH: safe.ENGLISH || originalText, HINDI: safe.HINDI || originalText, KANNADA: safe.KANNADA || originalText },
+      translations: { ENGLISH: safe.ENGLISH || originalText, HINDI: safe.HINDI || originalText, KANNADA: safe.KANNADA || originalText, MARATHI: safe.MARATHI || originalText, TAMIL: safe.TAMIL || originalText, MALAYALAM: safe.MALAYALAM || originalText, TELUGU: safe.TELUGU || originalText },
       timestamp: new Date(),
     }
     setMessages(prev => [...prev, newMsg])
@@ -804,14 +835,28 @@ export default function SessionPage() {
     setAiQuestions([])
   }
 
+  // ── End Conversation ───────────────────────────────────────────────────────
+  const endConversation = async () => {
+    setConversationEnded(true)
+    try {
+      await fetch(`/api/session/${sessionId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'COMPLETED' })
+      })
+    } catch (err) { console.error('Failed to end conversation:', err) }
+  }
+
   // ── Report actions ─────────────────────────────────────────────────────────
+  const canGenerateReport = conversationEnded || session?.status === 'COMPLETED'
+
   const generateReport = async () => {
+    if (!canGenerateReport) return
     setGenerating(true)
     try {
       const transcript = messages.map(m => `${m.speaker === 'doctor' ? 'Doctor' : 'Patient'}: ${m.translations.ENGLISH}`).join('\n')
       const res = await fetch('/api/ai/generate-report', {
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ transcript, extractedData, nerEntities, domain: session.domain, department: session.department, template: session.config?.template, personName: session.person.name, language: 'KANNADA' })
+        body: JSON.stringify({ transcript, extractedData, nerEntities, domain: session.domain, department: session.department, template: session.config?.template, personName: session.person.name, personPhone: session.person.phone, personEmail: session.person.email, language: 'ENGLISH' })
       })
       const { report: generated } = await res.json()
       await fetch(`/api/session/${sessionId}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ finalReport: generated }) })
@@ -986,7 +1031,7 @@ export default function SessionPage() {
       ).join('\n')
       const res = await fetch('/api/ai/generate-summary', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId, extractedData, nerEntities, domain: session.domain, department: session.department, personName: session.person.name, transcript })
+        body: JSON.stringify({ sessionId, extractedData, nerEntities, domain: session.domain, department: session.department, personName: session.person.name, personPhone: session.person.phone, personEmail: session.person.email, transcript })
       })
       if (!res.ok) throw new Error('Failed')
       const { summary: s } = await res.json()
@@ -1224,6 +1269,25 @@ export default function SessionPage() {
             {session.approved && <span className="mono text-xs px-2 py-0.5 rounded-full text-[#A78BFA] bg-[#1A1030] border border-[#A78BFA22]">✓ APPROVED</span>}
           </div>
           <div className="flex items-center gap-3">
+            {/* ── End Conversation Button */}
+            {!conversationEnded && session?.status !== 'COMPLETED' && (
+              <button
+                onClick={endConversation}
+                disabled={messages.length < 4}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-40"
+                style={{ background:'linear-gradient(135deg,#1A0A0A,#200505)', border:'1px solid #ef444444', color:'#ef4444', fontFamily:'IBM Plex Mono,monospace' }}
+                title={messages.length < 4 ? 'Need at least 4 messages to end conversation' : 'End conversation to generate report'}
+              >
+                <X className="w-3 h-3"/>
+                End Conversation
+              </button>
+            )}
+            {(conversationEnded || session?.status === 'COMPLETED') && (
+              <span className="mono text-xs px-2 py-0.5 rounded-full text-[#ef4444] bg-[#1A0505] border border-[#ef444422]">
+                ● ENDED
+              </span>
+            )}
+
             {/* ── Smart Summary Button */}
             <button
               onClick={generateSummary}
@@ -1239,7 +1303,7 @@ export default function SessionPage() {
 
             <span className="text-[#444] text-xs mono">Display:</span>
             <div className="flex gap-1">
-              {(['ENGLISH','HINDI','KANNADA'] as LangKey[]).map(l => (
+              {(['ENGLISH','HINDI','KANNADA','MARATHI','TAMIL','MALAYALAM','TELUGU'] as LangKey[]).map(l => (
                 <button key={l} onClick={() => setDisplayLanguage(l)}
                   className={`lang-btn ${displayLanguage === l ? 'active-neutral' : ''}`}>
                   {LANG_LABELS[l]}
@@ -1295,7 +1359,7 @@ export default function SessionPage() {
                   <span className="text-[#E8E8E8] text-sm font-medium">{isDoctorLabel}</span>
                 </div>
                 <div className="flex gap-1">
-                  {(['ENGLISH','HINDI','KANNADA'] as LangKey[]).map(l => (
+                  {(['ENGLISH','HINDI','KANNADA','MARATHI','TAMIL','MALAYALAM','TELUGU'] as LangKey[]).map(l => (
                     <button key={l} onClick={() => setDoctorLanguage(l)}
                       className={`lang-btn ${doctorLanguage === l ? 'active-doctor' : ''}`}>
                       {LANG_LABELS[l]}
@@ -1407,7 +1471,7 @@ export default function SessionPage() {
                             {isDoctor ? isDoctorLabel : isPatientLabel}
                           </span>
                           <div className="flex items-center gap-1">
-                            {(['ENGLISH','HINDI','KANNADA'] as LangKey[]).map(l => (
+                            {(['ENGLISH','HINDI','KANNADA','MARATHI','TAMIL','MALAYALAM','TELUGU'] as LangKey[]).map(l => (
                               <button key={l} onClick={() => setMsgLang(msg.id, l)}
                                 className={`lang-btn ${lang === l ? (isDoctor ? 'active-doctor' : 'active-patient') : ''}`}>
                                 {LANG_LABELS[l]}
@@ -1429,7 +1493,7 @@ export default function SessionPage() {
                             {/* Language selector for edit */}
                             <div className="flex gap-1 mb-2 items-center">
                               <span className="mono text-[9px] text-[#444] mr-1">Edit in:</span>
-                              {(['ENGLISH','HINDI','KANNADA'] as LangKey[]).map(l => (
+                              {(['ENGLISH','HINDI','KANNADA','MARATHI','TAMIL','MALAYALAM','TELUGU'] as LangKey[]).map(l => (
                                 <button key={l}
                                   onClick={() => {
                                     setEditingMsgLang(l)
@@ -1488,7 +1552,7 @@ export default function SessionPage() {
                   <span className="text-[#E8E8E8] text-sm font-medium">{isPatientLabel}</span>
                 </div>
                 <div className="flex gap-1">
-                  {(['ENGLISH','HINDI','KANNADA'] as LangKey[]).map(l => (
+                  {(['ENGLISH','HINDI','KANNADA','MARATHI','TAMIL','MALAYALAM','TELUGU'] as LangKey[]).map(l => (
                     <button key={l} onClick={() => setPatientLanguage(l)}
                       className={`lang-btn ${patientLanguage === l ? 'active-patient' : ''}`}>
                       {LANG_LABELS[l]}
@@ -1578,10 +1642,11 @@ export default function SessionPage() {
                 )}
               </div>
               <div className="flex items-center gap-2">
-                <button onClick={generateReport} disabled={generating || messages.length === 0}
-                  className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs mono font-medium transition-all ${messages.length === 0 ? 'bg-[#111] text-[#333] cursor-not-allowed' : 'bg-[#001824] border border-[#00D4FF44] text-[#00D4FF] hover:border-[#00D4FF88] hover:bg-[#002535]'}`}>
+                <button onClick={generateReport} disabled={generating || !canGenerateReport || messages.length === 0}
+                  title={!canGenerateReport ? 'End the conversation first to generate report' : ''}
+                  className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs mono font-medium transition-all ${!canGenerateReport || messages.length === 0 ? 'bg-[#111] text-[#333] cursor-not-allowed' : 'bg-[#001824] border border-[#00D4FF44] text-[#00D4FF] hover:border-[#00D4FF88] hover:bg-[#002535]'}`}>
                   {generating ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <Sparkles className="w-3.5 h-3.5"/>}
-                  {generating ? 'generating...' : 'Generate'}
+                  {generating ? 'generating...' : !canGenerateReport ? '🔒 End conversation first' : 'Generate'}
                 </button>
 
                 {/* FIX 3: Visual Edit button */}
@@ -1650,33 +1715,7 @@ export default function SessionPage() {
         </div>
 
         {/* ── EXPORT HISTORY ─────────────────────────────────────────────────── */}
-        {exports.length > 0 && (
-          <div className="px-4 mt-3">
-            <div className="dark-card p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <FileText className="w-4 h-4 text-[#555]"/>
-                <span className="text-sm text-[#888]">Cloud Exports</span>
-                <span className="mono text-xs text-[#333]">({exports.length})</span>
-              </div>
-              <div className="flex flex-col gap-2">
-                {exports.map((exp: any, i: number) => (
-                  <div key={exp.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 14px', background:'#0D0D0D', border:'1px solid #1E1E1E', borderRadius:8 }}>
-                    <div>
-                      <p style={{ fontSize:12, color:'#CCC', fontFamily:'IBM Plex Mono, monospace' }}>Export #{exports.length - i}</p>
-                      <p style={{ fontSize:10, color:'#444', fontFamily:'IBM Plex Mono, monospace', marginTop:2 }}>
-                        {new Date(exp.createdAt).toLocaleString('en-IN', { dateStyle:'medium', timeStyle:'short' })}
-                      </p>
-                    </div>
-                    <a href={exp.fileUrl} target="_blank" rel="noopener noreferrer"
-                      style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 14px', background:'#0A0A1A', border:'1px solid #6366f144', borderRadius:8, color:'#818cf8', fontSize:12, textDecoration:'none', fontFamily:'IBM Plex Mono, monospace' }}>
-                      <Download className="w-3 h-3"/> Open {exp.format === 'DATASET' ? 'Dataset' : 'PDF'}
-                    </a>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+        
 
         {/* ── SMART SUMMARY MODAL ─────────────────────────────────────────────── */}
         {showSummary && (
@@ -1707,6 +1746,10 @@ export default function SessionPage() {
                   { lang: 'ENGLISH' as LangKey, label: '🇬🇧 English', accent: '#00D4FF' },
                   { lang: 'HINDI'   as LangKey, label: '🇮🇳 हिंदी',    accent: '#F59E0B' },
                   { lang: 'KANNADA' as LangKey, label: '🏛️ ಕನ್ನಡ',   accent: '#34D399' },
+                  { lang: 'MARATHI' as LangKey, label: '🚩 मराठी',    accent: '#FF4500' },
+                  { lang: 'TAMIL'   as LangKey, label: '🛕 தமிழ்',    accent: '#FFD700' },
+                  { lang: 'MALAYALAM' as LangKey, label: '🌴 മലയാളം', accent: '#32CD32' },
+                  { lang: 'TELUGU'  as LangKey, label: '🎬 తెలుగు',   accent: '#FF8C00' },
                 ]).map(({ lang, label, accent }) => (
                   <button key={lang} onClick={() => setSummaryLang(lang)} style={{
                     padding:'6px 16px', borderRadius:8, border:`1px solid ${summaryLang === lang ? accent : '#2A2A2A'}`,
@@ -1725,7 +1768,7 @@ export default function SessionPage() {
                     <p style={{ fontFamily:'IBM Plex Mono,monospace', fontSize:12, color:'#555', margin:0 }}>Generating summary in 3 languages…</p>
                   </div>
                 ) : summary ? (() => {
-                  const langKey = summaryLang === 'ENGLISH' ? 'english' : summaryLang === 'HINDI' ? 'hindi' : 'kannada'
+                  const langKey = summaryLang === 'ENGLISH' ? 'english' : summaryLang === 'HINDI' ? 'hindi' : summaryLang === 'KANNADA' ? 'kannada' : summaryLang === 'MARATHI' ? 'marathi' : summaryLang === 'TAMIL' ? 'tamil' : summaryLang === 'MALAYALAM' ? 'malayalam' : 'telugu'
                   const s = summary[langKey] || {}
                   const isHealthcare = session?.domain === 'HEALTHCARE'
 
@@ -1838,6 +1881,10 @@ export default function SessionPage() {
                   { lang: 'ENGLISH' as LangKey, flag: '🇬🇧', native: 'English',   script: 'EN', accent: '#00D4FF', bg: '#001824', border: '#00D4FF' },
                   { lang: 'HINDI'   as LangKey, flag: '🇮🇳', native: 'हिंदी',      script: 'हि', accent: '#F59E0B', bg: '#1A1200', border: '#F59E0B' },
                   { lang: 'KANNADA' as LangKey, flag: '🏛️', native: 'ಕನ್ನಡ',     script: 'ಕ',  accent: '#34D399', bg: '#001A0F', border: '#34D399' },
+                  { lang: 'MARATHI' as LangKey, flag: '🚩', native: 'मराठी',      script: 'म',  accent: '#FF4500', bg: '#1A0A00', border: '#FF4500' },
+                  { lang: 'TAMIL'   as LangKey, flag: '🛕', native: 'தமிழ்',      script: 'த',  accent: '#FFD700', bg: '#1A1A00', border: '#FFD700' },
+                  { lang: 'MALAYALAM' as LangKey, flag: '🌴', native: 'മലയാളം',   script: 'മ',  accent: '#32CD32', bg: '#001A05', border: '#32CD32' },
+                  { lang: 'TELUGU'  as LangKey, flag: '🎬', native: 'తెలుగు',     script: 'తె', accent: '#FF8C00', bg: '#1A0B00', border: '#FF8C00' },
                 ]).map(({ lang, flag, native, script, accent, bg, border }) => (
                   <button
                     key={lang}
@@ -1860,7 +1907,7 @@ export default function SessionPage() {
 
               {/* Hint */}
               <p style={{ fontFamily:'IBM Plex Mono,monospace', fontSize:10, color:'#444', textAlign:'center', lineHeight:1.5, margin:0 }}>
-                Hindi & Kannada versions are AI-translated.<br/>English is the original generated report.
+                Translated versions are generated using AI.<br/>English is the original generated report.
               </p>
             </div>
           </div>

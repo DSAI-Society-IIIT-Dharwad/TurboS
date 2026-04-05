@@ -104,14 +104,14 @@ export class SarvamClient {
     return data.audios?.[0] || ''
   }
 
-  static convertLanguageCode(code: 'ENGLISH' | 'HINDI' | 'KANNADA'): string {
-    return { ENGLISH: 'en-IN', HINDI: 'hi-IN', KANNADA: 'kn-IN' }[code] || 'en-IN'
+  static convertLanguageCode(code: 'ENGLISH' | 'HINDI' | 'KANNADA' | 'MARATHI' | 'TAMIL' | 'MALAYALAM' | 'TELUGU'): string {
+    return { ENGLISH: 'en-IN', HINDI: 'hi-IN', KANNADA: 'kn-IN', MARATHI: 'mr-IN', TAMIL: 'ta-IN', MALAYALAM: 'ml-IN', TELUGU: 'te-IN' }[code] || 'en-IN'
   }
 
   static getLanguageName(code: string): string {
     const map: Record<string, string> = {
       'en-IN': 'English', 'hi-IN': 'Hindi', 'kn-IN': 'Kannada',
-      'ta-IN': 'Tamil', 'te-IN': 'Telugu'
+      'mr-IN': 'Marathi', 'ta-IN': 'Tamil', 'ml-IN': 'Malayalam', 'te-IN': 'Telugu'
     }
     return map[code] || code
   }
@@ -122,7 +122,11 @@ export const sarvam = new SarvamClient(process.env.SARVAM_API_KEY!)
 export const LANGUAGE_CODES = {
   ENGLISH: 'en-IN',
   HINDI: 'hi-IN',
-  KANNADA: 'kn-IN'
+  KANNADA: 'kn-IN',
+  MARATHI: 'mr-IN',
+  TAMIL: 'ta-IN',
+  MALAYALAM: 'ml-IN',
+  TELUGU: 'te-IN'
 } as const
 
 export type SupportedLanguage = keyof typeof LANGUAGE_CODES

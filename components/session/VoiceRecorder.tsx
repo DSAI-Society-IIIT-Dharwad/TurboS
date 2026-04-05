@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 
 interface VoiceRecorderProps {
   onTranscript: (original: string, translated: string) => void
-  language: 'ENGLISH' | 'HINDI' | 'KANNADA'
+  language: 'ENGLISH' | 'HINDI' | 'KANNADA' | 'MARATHI' | 'TAMIL' | 'MALAYALAM' | 'TELUGU'
 }
 
 export function VoiceRecorder({ onTranscript, language }: VoiceRecorderProps) {
@@ -75,7 +75,11 @@ export function VoiceRecorder({ onTranscript, language }: VoiceRecorderProps) {
       const langCode = { 
         ENGLISH: 'en-IN', 
         HINDI: 'hi-IN', 
-        KANNADA: 'kn-IN' 
+        KANNADA: 'kn-IN',
+        MARATHI: 'mr-IN',
+        TAMIL: 'ta-IN',
+        MALAYALAM: 'ml-IN',
+        TELUGU: 'te-IN'
       }[language]
       
       const translateRes = await fetch('/api/voice/translate', {

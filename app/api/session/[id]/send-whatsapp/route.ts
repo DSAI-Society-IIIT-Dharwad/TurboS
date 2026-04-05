@@ -18,6 +18,14 @@ const WHATSAPP_MESSAGES: Record<string, (name: string) => string> = {
     `नमस्ते ${name},\n\nआपकी परामर्श रिपोर्ट तैयार है। कृपया नीचे संलग्न PDF देखें।\n\n_TurboS Medifi द्वारा भेजा गया_`,
   KANNADA: (name) =>
     `ನಮಸ್ಕಾರ ${name},\n\nನಿಮ್ಮ ಸಮಾಲೋಚನಾ ವರದಿ ಸಿದ್ಧವಾಗಿದೆ. ದಯವಿಟ್ಟು ಕೆಳಗೆ ಲಗತ್ತಿಸಲಾದ PDF ನೋಡಿ.\n\n_TurboS Medifi ಮೂಲಕ ಕಳುಹಿಸಲಾಗಿದೆ_`,
+  MARATHI: (name) =>
+    `नमस्कार ${name},\n\nतुमचा सल्लामसलत अहवाल तयार आहे. कृपया खाली जोडलेला PDF पहा.\n\n_TurboS Medifi द्वारे पाठवले_`,
+  TAMIL: (name) =>
+    `வணக்கம் ${name},\n\nஉங்கள் ஆலோசனை அறிக்கை தயாராக உள்ளது. கீழே இணைக்கப்பட்ட PDF ஐ பார்க்கவும்.\n\n_TurboS Medifi மூலம் அனுப்பப்பட்டது_`,
+  MALAYALAM: (name) =>
+    `നമസ്കാരം ${name},\n\nനിങ്ങളുടെ കൺസൾട്ടേഷൻ റിപ്പോർട്ട് തയ്യാറാണ്. ദയവായി താഴെ അറ്റാച്ച് ചെയ്ത PDF കാണുക.\n\n_TurboS Medifi വഴി അയച്ചത്_`,
+  TELUGU: (name) =>
+    `నమస్కారం ${name},\n\nమీ సంప్రదింపు నివేదిక సిద్ధంగా ఉంది. దయచేసి క్రింద జతచేసిన PDF చూడండి.\n\n_TurboS Medifi ద్వారా పంపబడింది_`,
 }
 
 export async function POST(

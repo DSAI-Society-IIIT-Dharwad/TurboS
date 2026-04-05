@@ -7,13 +7,21 @@ import { sarvam } from '@/lib/sarvam'
 import { groq, MODELS } from '@/lib/groq'
 
 const LANG_CODE: Record<string, string> = {
-  HINDI:   'hi-IN',
-  KANNADA: 'kn-IN',
+  HINDI:    'hi-IN',
+  KANNADA:  'kn-IN',
+  MARATHI:  'mr-IN',
+  TAMIL:    'ta-IN',
+  MALAYALAM:'ml-IN',
+  TELUGU:   'te-IN',
 }
 
 const LANG_NAME: Record<string, string> = {
-  HINDI:   'Hindi',
-  KANNADA: 'Kannada',
+  HINDI:    'Hindi',
+  KANNADA:  'Kannada',
+  MARATHI:  'Marathi',
+  TAMIL:    'Tamil',
+  MALAYALAM:'Malayalam',
+  TELUGU:   'Telugu',
 }
 
 // ── Sarvam approach: translate visible text chunks, swap back into HTML ─────
