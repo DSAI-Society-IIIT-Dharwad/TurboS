@@ -892,6 +892,8 @@ export default function PersonLookupPage() {
   const [focusedField, setFocusedField] = useState<string | null>(null)
   const [sessionLoading, setSessionLoading] = useState(false)
   const [createLoading, setCreateLoading] = useState(false)
+  const [showSessionTypeModal, setShowSessionTypeModal] = useState(false)
+  const [selectedSessionMode, setSelectedSessionMode] = useState<string | null>(null)
 
   const isHC = domain === 'HEALTHCARE'
   const accent = isHC ? '#22d3ee' : '#34d399'
@@ -926,16 +928,24 @@ export default function PersonLookupPage() {
     finally { setCreateLoading(false) }
   }
 
-  const startSession = async () => {
+  const startSession = async (sessionMode: 'SINGLE' | 'MULTI') => {
+    setSelectedSessionMode(sessionMode)
     setSessionLoading(true)
     try {
       const res = await fetch('/api/session/create', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ personId: person.id, domain, language: 'ENGLISH' })
+        body: JSON.stringify({ personId: person.id, domain, language: 'ENGLISH', sessionMode })
       })
-      if (res.ok) { const s = await res.json(); router.push(`/session/${s.id}`) }
+      if (res.ok) {
+        const s = await res.json()
+        if (sessionMode === 'SINGLE') {
+          router.push(`/session/${s.id}/single`)
+        } else {
+          router.push(`/session/${s.id}`)
+        }
+      }
     } catch (e) { console.error(e) }
-    finally { setSessionLoading(false) }
+    finally { setSessionLoading(false); setShowSessionTypeModal(false); setSelectedSessionMode(null) }
   }
 
   const f = (field: string) => ({
@@ -1282,10 +1292,8 @@ export default function PersonLookupPage() {
 
                 {/* CTA button flush to bottom */}
                 <div style={{ padding: '0 30px 30px', position: 'relative', zIndex: 4 }}>
-                  <button className="pl-btn-cta" onClick={startSession} disabled={sessionLoading}>
-                    {sessionLoading
-                      ? <><span style={{ width: 15, height: 15, border: '2px solid rgba(0,0,0,.2)', borderTopColor: '#000', borderRadius: '50%', animation: 'spin .6s linear infinite', flexShrink: 0 }} /><LanguageCycler texts={['Launching Session…', 'ಸೆಷನ್ ಪ್ರಾರಂಭಿಸಲಾಗುತ್ತಿದೆ…']} interval={3500} /></>
-                      : <><LanguageCycler texts={['Start New Session', 'ಹೊಸ ಸೆಷನ್ ಪ್ರಾರಂಭಿಸಿ']} interval={3500} /> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3" /></svg></>}
+                  <button className="pl-btn-cta" onClick={() => setShowSessionTypeModal(true)} disabled={sessionLoading}>
+                    <LanguageCycler texts={['Start New Session', 'ಹೊಸ ಸೆಷನ್ ಪ್ರಾರಂಭಿಸಿ']} interval={3500} /> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3" /></svg>
                   </button>
                 </div>
               </StaticCard>
@@ -1365,6 +1373,195 @@ export default function PersonLookupPage() {
           </>
         )}
       </div>
+
+      {/* ══ SESSION TYPE MODAL ══ */}
+      {showSessionTypeModal && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(0,0,0,.75)', backdropFilter: 'blur(12px)',
+          animation: 'fadeSlide .25s ease',
+        }} onClick={() => !sessionLoading && setShowSessionTypeModal(false)}>
+          <div onClick={e => e.stopPropagation()} style={{
+            width: '100%', maxWidth: 580, padding: '0 20px',
+            animation: 'fadeSlide .3s ease',
+          }}>
+            {/* Modal Card */}
+            <div style={{
+              background: 'linear-gradient(165deg, rgba(8,12,24,.98), rgba(3,6,15,.99))',
+              border: `1px solid rgba(${accentRgb},.12)`,
+              borderRadius: 24, overflow: 'hidden',
+              boxShadow: `0 40px 80px rgba(0,0,0,.7), 0 0 60px rgba(${accentRgb},.06)`,
+            }}>
+              {/* Top accent line */}
+              <div style={{
+                height: 2,
+                background: `linear-gradient(90deg, transparent, rgba(${accentRgb},.6), rgba(${accent2Rgb},.3), transparent)`,
+              }} />
+
+              {/* Header */}
+              <div style={{ padding: '28px 32px 0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                  <span className="pl-sec-label" style={{ color: accent }}>Session Type</span>
+                  <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg,rgba(${accentRgb},.13),transparent)` }} />
+                  <button onClick={() => setShowSessionTypeModal(false)} style={{
+                    width: 28, height: 28, borderRadius: 8,
+                    border: '1px solid rgba(255,255,255,.08)', background: 'rgba(255,255,255,.02)',
+                    color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', fontSize: 14, transition: 'all .2s',
+                  }}>
+                    ×
+                  </button>
+                </div>
+                <h2 style={{
+                  fontFamily: 'Outfit', fontWeight: 900, fontSize: '1.3rem',
+                  color: '#f8fafc', letterSpacing: '-.02em', marginBottom: 6,
+                }}>
+                  Choose Session Mode
+                </h2>
+                <p style={{ fontSize: '.82rem', color: '#64748b', lineHeight: 1.6, marginBottom: 24 }}>
+                  Select how you'd like to conduct this consultation session.
+                </p>
+              </div>
+
+              {/* Options */}
+              <div style={{ padding: '0 32px 28px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+                {/* ── Single Language Option ── */}
+                <button
+                  disabled={sessionLoading}
+                  onClick={() => startSession('SINGLE')}
+                  style={{
+                    width: '100%', padding: '20px 22px', borderRadius: 16,
+                    background: selectedSessionMode === 'SINGLE'
+                      ? `linear-gradient(135deg, rgba(${accentRgb},.12), rgba(${accentRgb},.04))`
+                      : 'rgba(255,255,255,.018)',
+                    border: selectedSessionMode === 'SINGLE'
+                      ? `1px solid rgba(${accentRgb},.3)`
+                      : '1px solid rgba(255,255,255,.06)',
+                    cursor: sessionLoading ? 'not-allowed' : 'pointer',
+                    textAlign: 'left', transition: 'all .25s',
+                    opacity: sessionLoading && selectedSessionMode !== 'SINGLE' ? 0.4 : 1,
+                  }}
+                  onMouseEnter={e => { if (!sessionLoading) { e.currentTarget.style.borderColor = `rgba(${accentRgb},.22)`; e.currentTarget.style.background = `rgba(${accentRgb},.035)` }}}
+                  onMouseLeave={e => { if (!sessionLoading && selectedSessionMode !== 'SINGLE') { e.currentTarget.style.borderColor = 'rgba(255,255,255,.06)'; e.currentTarget.style.background = 'rgba(255,255,255,.018)' }}}
+                >
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+                    <div style={{
+                      width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+                      background: `linear-gradient(135deg, rgba(${accentRgb},.12), rgba(${accentRgb},.04))`,
+                      border: `1px solid rgba(${accentRgb},.2)`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      {sessionLoading && selectedSessionMode === 'SINGLE' ? (
+                        <span style={{ width: 18, height: 18, border: `2px solid rgba(${accentRgb},.2)`, borderTopColor: accent, borderRadius: '50%', animation: 'spin .6s linear infinite', display: 'block' }} />
+                      ) : (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                          <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                          <line x1="12" y1="19" x2="12" y2="23" />
+                          <line x1="8" y1="23" x2="16" y2="23" />
+                        </svg>
+                      )}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                        <span style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '.95rem', color: '#f8fafc' }}>
+                          Single Language Session
+                        </span>
+                        <span style={{
+                          padding: '2px 8px', borderRadius: 100,
+                          background: `rgba(${accentRgb},.06)`, border: `1px solid rgba(${accentRgb},.16)`,
+                          fontFamily: 'JetBrains Mono', fontSize: '.52rem', fontWeight: 600,
+                          color: accent, letterSpacing: '.06em',
+                        }}>NEW</span>
+                      </div>
+                      <p style={{ fontSize: '.76rem', color: '#64748b', lineHeight: 1.55, marginBottom: 10 }}>
+                        One continuous recording with auto language detection. NER entity extraction, medical report generation, and full editable transcript at the end.
+                      </p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        {['Auto-detect', 'Single mic', 'Editable transcript', 'Translate'].map(tag => (
+                          <span key={tag} style={{
+                            padding: '3px 9px', borderRadius: 6,
+                            background: `rgba(${accentRgb},.04)`, border: `1px solid rgba(${accentRgb},.1)`,
+                            fontFamily: 'JetBrains Mono', fontSize: '.55rem', color: accent, fontWeight: 500,
+                          }}>{tag}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </button>
+
+                {/* ── Multi-Language Option ── */}
+                <button
+                  disabled={sessionLoading}
+                  onClick={() => startSession('MULTI')}
+                  style={{
+                    width: '100%', padding: '20px 22px', borderRadius: 16,
+                    background: selectedSessionMode === 'MULTI'
+                      ? `linear-gradient(135deg, rgba(${accent2Rgb},.12), rgba(${accent2Rgb},.04))`
+                      : 'rgba(255,255,255,.018)',
+                    border: selectedSessionMode === 'MULTI'
+                      ? `1px solid rgba(${accent2Rgb},.3)`
+                      : '1px solid rgba(255,255,255,.06)',
+                    cursor: sessionLoading ? 'not-allowed' : 'pointer',
+                    textAlign: 'left', transition: 'all .25s',
+                    opacity: sessionLoading && selectedSessionMode !== 'MULTI' ? 0.4 : 1,
+                  }}
+                  onMouseEnter={e => { if (!sessionLoading) { e.currentTarget.style.borderColor = `rgba(${accent2Rgb},.22)`; e.currentTarget.style.background = `rgba(${accent2Rgb},.035)` }}}
+                  onMouseLeave={e => { if (!sessionLoading && selectedSessionMode !== 'MULTI') { e.currentTarget.style.borderColor = 'rgba(255,255,255,.06)'; e.currentTarget.style.background = 'rgba(255,255,255,.018)' }}}
+                >
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+                    <div style={{
+                      width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+                      background: `linear-gradient(135deg, rgba(${accent2Rgb},.12), rgba(${accent2Rgb},.04))`,
+                      border: `1px solid rgba(${accent2Rgb},.2)`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      {sessionLoading && selectedSessionMode === 'MULTI' ? (
+                        <span style={{ width: 18, height: 18, border: `2px solid rgba(${accent2Rgb},.2)`, borderTopColor: accent2, borderRadius: '50%', animation: 'spin .6s linear infinite', display: 'block' }} />
+                      ) : (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={accent2} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                          <circle cx="9" cy="7" r="4" />
+                          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                      )}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                        <span style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '.95rem', color: '#f8fafc' }}>
+                          Multi-Language Session
+                        </span>
+                      </div>
+                      <p style={{ fontSize: '.76rem', color: '#64748b', lineHeight: 1.55, marginBottom: 10 }}>
+                        Doctor and patient speak in different languages. Separate recording channels with real-time translation across all languages.
+                      </p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        {['Doctor + Patient mics', '3 languages', 'Live translate', 'Cross-lingual'].map(tag => (
+                          <span key={tag} style={{
+                            padding: '3px 9px', borderRadius: 6,
+                            background: `rgba(${accent2Rgb},.04)`, border: `1px solid rgba(${accent2Rgb},.1)`,
+                            fontFamily: 'JetBrains Mono', fontSize: '.55rem', color: accent2, fontWeight: 500,
+                          }}>{tag}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </button>
+
+              </div>
+
+              {/* Bottom accent */}
+              <div style={{
+                height: 2,
+                background: `linear-gradient(90deg, transparent 5%, rgba(${accentRgb},.25) 30%, rgba(${accent2Rgb},.15) 70%, transparent 95%)`,
+              }} />
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

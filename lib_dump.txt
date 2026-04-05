@@ -8,16 +8,51 @@ export const groq = new Groq({
 })
 
 export const MODELS = {
-  // Fast inference
+  // Use 8b for NER and light tasks â€” much cheaper on TPD
   FAST: 'llama-3.1-8b-instant',
-  
-  // Smart/accurate (choose one that works)
-  SMART: 'llama-3.3-70b-versatile', // Try this first
-  // SMART: 'mixtral-8x7b-32768',    // Fallback
-  
-  // Specialized
+
+  // Use for summaries and complex reasoning
+  SMART: 'llama-3.3-70b-versatile',
+
+  // Fallback chain when rate limited
+  FALLBACKS: [
+    'llama-3.1-8b-instant',   // cheapest, fastest
+    'gemma2-9b-it',           // Google's model, separate quota
+    'mixtral-8x7b-32768',     // Mistral, separate quota
+  ],
+
   MIXTRAL: 'mixtral-8x7b-32768',
-  SMALL: 'gemma2-9b-it'
+  SMALL: 'gemma2-9b-it',
+}
+
+/**
+ * Call Groq with automatic model fallback on 429 rate limit.
+ * Tries SMART first, then each model in FALLBACKS.
+ */
+export async function groqWithFallback(
+  params: Omit<Parameters<typeof groq.chat.completions.create>[0], 'model'>,
+  preferSmart = true
+): Promise<Awaited<ReturnType<typeof groq.chat.completions.create>>> {
+  const modelsToTry = preferSmart
+    ? [MODELS.SMART, ...MODELS.FALLBACKS]
+    : [MODELS.FAST, ...MODELS.FALLBACKS]
+
+  let lastError: any
+  for (const model of modelsToTry) {
+    try {
+      console.log(`Trying Groq model: ${model}`)
+      const response = await groq.chat.completions.create({ ...params, model })
+      return response
+    } catch (err: any) {
+      if (err?.status === 429) {
+        console.warn(`Rate limited on ${model}, trying next fallback...`)
+        lastError = err
+        continue
+      }
+      throw err // non-429 errors bubble up immediately
+    }
+  }
+  throw lastError // all models exhausted
 }
 
 ===== C:\Users\Jatin\Desktop\turbos-medifi\lib\prisma.ts =====
@@ -327,7 +362,6 @@ export function useSessionStream(sessionId: string) {
 
 ===== C:\Users\Jatin\Desktop\turbos-medifi\lib\huggingface\ner.ts =====
 // lib/huggingface/ner.ts
-// FIXED: Updated API URL from api-inference.huggingface.co to router.huggingface.co
 
 export interface MedicalEntities {
   symptoms: string[]
@@ -348,7 +382,18 @@ export interface HuggingFaceEntity {
   end: number
 }
 
-// Extract negated spans from text so we can exclude them
+// Phrases that look like duration but are NOT real time references
+const INVALID_DURATION_PHRASES = [
+  'after a',
+  'after a while',
+  'a while',
+  'while',
+  'after',
+  'later',
+  'soon',
+  'once',
+]
+
 function getNegatedSpans(text: string): Array<{ start: number; end: number }> {
   const negationPatterns = [
     /\bno\s+\w+/gi,
@@ -378,6 +423,55 @@ function isNegated(
   )
 }
 
+function mergeSubwordEntities(entities: HuggingFaceEntity[]): HuggingFaceEntity[] {
+  if (entities.length === 0) return []
+
+  const merged: HuggingFaceEntity[] = []
+  let current = { ...entities[0] }
+
+  for (let i = 1; i < entities.length; i++) {
+    const next = entities[i]
+    const isSubword = next.word.startsWith('##')
+    const isAdjacent =
+      next.entity_group === current.entity_group && next.start === current.end
+
+    if (isSubword || isAdjacent) {
+      current.word += next.word.startsWith('##') ? next.word.slice(2) : next.word
+      current.end = next.end
+      current.score = Math.max(current.score, next.score)
+    } else {
+      merged.push(current)
+      current = { ...next }
+    }
+  }
+  merged.push(current)
+  return merged
+}
+
+export function hasSubwordFragments(entities: MedicalEntities): boolean {
+  const allWords = Object.values(entities).flat()
+  return allWords.some(
+    word => word.startsWith('##') || (word.length <= 2 && /^[a-z]+$/i.test(word))
+  )
+}
+
+function deduplicateSubstrings(arr: string[]): string[] {
+  return arr.filter(
+    word => !arr.some(other => other !== word && other.includes(word))
+  )
+}
+
+function isValidDuration(word: string): boolean {
+  const lower = word.toLowerCase().trim()
+  // Must be rejected if it matches any invalid phrase
+  if (INVALID_DURATION_PHRASES.includes(lower)) return false
+  // Must contain a time word or number to be valid
+  const timeWords = /\b(day|days|week|weeks|hour|hours|month|months|morning|night|yesterday|ago|since|for)\b/i
+  const hasNumber = /\d/.test(word)
+  const hasTimeWord = timeWords.test(word)
+  return hasNumber || hasTimeWord
+}
+
 export async function extractMedicalEntitiesHF(text: string): Promise<MedicalEntities> {
   const apiKey = process.env.HUGGINGFACE_API_KEY
   if (!apiKey) {
@@ -388,7 +482,6 @@ export async function extractMedicalEntitiesHF(text: string): Promise<MedicalEnt
   const negatedSpans = getNegatedSpans(text)
 
   try {
-    // FIXED: Use the new router URL instead of the deprecated api-inference URL
     const response = await fetch(
       'https://router.huggingface.co/hf-inference/models/d4data/biomedical-ner-all',
       {
@@ -397,40 +490,47 @@ export async function extractMedicalEntitiesHF(text: string): Promise<MedicalEnt
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ inputs: text }),
+        body: JSON.stringify({
+          inputs: text,
+          parameters: { aggregation_strategy: 'simple' },
+        }),
       }
     )
 
     if (!response.ok) {
       const error = await response.text()
       console.error(`Hugging Face API error (${response.status}):`, error)
-
-      // Model still loading â€” wait and retry once
       if (response.status === 503) {
         console.log('HF model is loading, retrying in 10s...')
         await new Promise(resolve => setTimeout(resolve, 10_000))
         return extractMedicalEntitiesHF(text)
       }
-
-      // For any other error fall through to empty
       return getEmptyEntities()
     }
 
     const raw = await response.json()
 
-    // The router may return { generated_text: [...] } or a flat array depending on model
-    // d4data/biomedical-ner-all returns a flat array of entity objects
     let entities: HuggingFaceEntity[] = []
     if (Array.isArray(raw)) {
       entities = raw
     } else if (raw && typeof raw === 'object') {
-      // Flatten any nested structure just in case
       const candidate = Object.values(raw).find(v => Array.isArray(v))
       if (candidate) entities = candidate as HuggingFaceEntity[]
     }
 
     const positiveEntities = entities.filter(e => !isNegated(e, negatedSpans))
-    return mapEntitiesToStructure(positiveEntities)
+    const mergedEntities = mergeSubwordEntities(positiveEntities)
+    const result = mapEntitiesToStructure(mergedEntities)
+
+    // Deduplicate substrings
+    for (const key of Object.keys(result) as Array<keyof MedicalEntities>) {
+      result[key] = deduplicateSubstrings(result[key])
+    }
+
+    // Filter out invalid duration phrases
+    result.duration = result.duration.filter(isValidDuration)
+
+    return result
 
   } catch (error) {
     console.error('Hugging Face NER error:', error)
@@ -484,14 +584,14 @@ function mapEntitiesToStructure(entities: HuggingFaceEntity[]): MedicalEntities 
 
 function getEmptyEntities(): MedicalEntities {
   return {
-    symptoms:   [],
+    symptoms:    [],
     medications: [],
-    diseases:   [],
-    procedures: [],
-    bodyParts:  [],
-    severity:   [],
-    duration:   [],
-    frequency:  [],
+    diseases:    [],
+    procedures:  [],
+    bodyParts:   [],
+    severity:    [],
+    duration:    [],
+    frequency:   [],
   }
 }
 
@@ -681,31 +781,38 @@ export interface MedicalEntities {
 }
 
 export async function extractMedicalEntities(text: string): Promise<MedicalEntities> {
-  const prompt = `You are a strict medical Named Entity Recognition (NER) system.
+  const prompt = `You are a strict medical Named Entity Recognition (NER) system analyzing a full doctor-patient conversation.
 
 CRITICAL RULES:
-- Extract ONLY entities that are POSITIVELY mentioned
-- If the patient says "no vomiting", "no fever", "no cough" â€” DO NOT include those in the list
-- Negated symptoms must be completely excluded
-- Do NOT hallucinate or infer entities not explicitly stated
-- Only include what was directly said, not what might be implied
+- Read the ENTIRE conversation and extract entities cumulatively across ALL messages
+- Extract ONLY entities that are POSITIVELY confirmed anywhere in the conversation
+- NEGATION is SPECIFIC: "no cough or sore throat" means only cough and sore throat are negated
+  â†’ "body ache" in the SAME sentence is NOT negated and MUST be extracted
+- "the fever subsided after a while" â†’ "after a while" is NOT a duration, skip it
+- DURATION must be a real time reference: "three days", "since morning", "for a week", "yesterday"
+- Do NOT include conversational phrases like "after a", "after a while", "a while" as duration
+- Procedures mentioned by the DOCTOR as recommendations must be extracted (e.g. "CBC", "malaria test")
+- Diseases or diagnoses stated by the doctor must be extracted (e.g. "viral infection")
+- Do NOT hallucinate â€” only extract what is explicitly stated
+- No partial duplicates â€” "three days" not "three" separately
+- Each value must be a meaningful complete medical term or phrase
 
-**Conversation to analyze:**
+**Full conversation to analyze:**
 ${text}
 
-**Extract ONLY positively confirmed entities:**
-1. SYMPTOMS - Symptoms the patient CONFIRMS having (NOT denied symptoms)
-2. MEDICATIONS - Drugs/medicines being taken
-3. DISEASES - Confirmed or suspected diagnoses mentioned
-4. PROCEDURES - Tests or procedures mentioned (e.g., "blood test", "X-ray", "malaria screening")
-5. BODY_PARTS - Body parts mentioned in context of symptoms
-6. SEVERITY - Severity words used (e.g., "mild", "severe", "high")
-7. DURATION - Time references (e.g., "3 days", "since morning")
-8. FREQUENCY - Frequency words (e.g., "daily", "twice a day")
+**Extract cumulatively across the entire conversation:**
+1. SYMPTOMS â€” positively confirmed symptoms from patient (exclude only the specifically negated ones)
+2. MEDICATIONS â€” any drugs/medicines mentioned as taken or prescribed
+3. DISEASES â€” diagnoses or conditions mentioned by doctor or patient
+4. PROCEDURES â€” any test or procedure recommended or mentioned (CBC, blood test, X-ray, malaria test, urine routine, etc.)
+5. BODY_PARTS â€” body parts mentioned in symptom context
+6. SEVERITY â€” severity descriptors (mild, severe, high, slightly high, normal)
+7. DURATION â€” real time references only ("three days", "yesterday", "since morning") â€” NO phrases like "after a", "after a while"
+8. FREQUENCY â€” how often symptoms occur (daily, twice a day, constant, intermittent)
 
-**Negation patterns to exclude:** "no X", "without X", "denies X", "not having X", "no history of X"
+**Negation rule:** "no X or Y" â†’ only X and Y are negated. Other entities in the same sentence are still valid.
 
-Return ONLY valid JSON:
+Return ONLY valid JSON with no extra text:
 {
   "symptoms": [],
   "medications": [],
@@ -719,11 +826,11 @@ Return ONLY valid JSON:
 
   try {
     const response = await groq.chat.completions.create({
-      model: MODELS.SMART,
+      model: MODELS.FAST,    // â† 8b instead of 70b, good enough for NER
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.1,
       response_format: { type: 'json_object' },
-      max_tokens: 1000
+      max_tokens: 500        // â† NER output is small, 500 is plenty
     })
     const entities = JSON.parse(response.choices[0].message.content!)
     return entities as MedicalEntities

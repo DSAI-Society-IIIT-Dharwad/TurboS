@@ -663,13 +663,13 @@ function PatientPortalSection() {
         <Reveal style={{ textAlign: 'center', marginBottom: 64 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: '.66rem', fontWeight: 600, letterSpacing: '.18em', textTransform: 'uppercase' as const, color: '#818cf8', marginBottom: 12, fontFamily: 'JetBrains Mono,monospace' }}>
             <span style={{ width: 20, height: 1, background: 'linear-gradient(90deg,#818cf8,transparent)', display: 'inline-block' }} />
-            Patient Access
+            <LanguageCycler texts={['Patient Access', 'à²°à³‹à²—à²¿ à²ªà³à²°à²µà³‡à²¶']} interval={3500} />
           </div>
           <h2 style={{ fontFamily: 'Outfit,sans-serif', fontSize: 'clamp(1.9rem,3.2vw,3rem)', fontWeight: 900, color: '#f8fafc', lineHeight: 1.08, marginBottom: 14, letterSpacing: '-.02em' }}>
-            Your health, in your hands.
+            <LanguageCycler texts={['Your health, in your hands.', 'à²¨à²¿à²®à³à²® à²†à²°à³‹à²—à³à²¯, à²¨à²¿à²®à³à²® à²•à³ˆà²¯à²²à³à²²à²¿.']} interval={3500} />
           </h2>
           <p style={{ fontSize: '.95rem', lineHeight: 1.8, color: '#64748b', maxWidth: 480, margin: '0 auto' }}>
-            Patients can access their reports, medication schedules, and smart summaries â€” anytime, in their language.
+            <LanguageCycler texts={['Patients can access their reports, medication schedules, and smart summaries â€” anytime, in their language.', 'à²°à³‹à²—à²¿à²—à²³à³ à²¤à²®à³à²® à²µà²°à²¦à²¿à²—à²³à³, à²”à²·à²§à²¿ à²µà³‡à²³à²¾à²ªà²Ÿà³à²Ÿà²¿, à²®à²¤à³à²¤à³ à²¸à²¾à²°à²¾à²‚à²¶à²—à²³à²¨à³à²¨à³ à²¨à³‹à²¡à²¬à²¹à³à²¦à³.']} interval={3500} />
           </p>
         </Reveal>
 
@@ -706,11 +706,11 @@ function PatientPortalSection() {
               }}
               onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.transform = 'translateY(-3px) scale(1.03)'; (e.currentTarget as HTMLAnchorElement).style.boxShadow = '0 0 50px rgba(99,102,241,.6), 0 20px 40px rgba(0,0,0,.6)' }}
               onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.transform = 'none'; (e.currentTarget as HTMLAnchorElement).style.boxShadow = '0 0 30px rgba(99,102,241,.4), 0 12px 28px rgba(0,0,0,.5)' }}>
-              ðŸ¥ Access Patient Portal
+              ðŸ¥ <LanguageCycler texts={['Access Patient Portal', 'à²°à³‹à²—à²¿ à²ªà³‹à²°à³à²Ÿà²²à³ à²ªà³à²°à²µà³‡à²¶à²¿à²¸à²¿']} interval={3500} />
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
             </Link>
             <p style={{ fontSize: '.78rem', color: '#374151', marginTop: 14, fontFamily: 'JetBrains Mono,monospace' }}>
-              No app download required Â· Works on any device
+              <LanguageCycler texts={['No app download required Â· Works on any device', 'à²†à³à²¯à²ªà³ à²¡à³Œà²¨à³â€Œà²²à³‹à²¡à³ à²…à²—à²¤à³à²¯à²µà²¿à²²à³à²² Â· à²¯à²¾à²µà³à²¦à³‡ à²¸à²¾à²§à²¨à²¦à²²à³à²²à²¿ à²•à³†à²²à²¸ à²®à²¾à²¡à³à²¤à³à²¤à²¦à³†']} interval={3500} />
             </p>
           </div>
         </Reveal>
@@ -957,6 +957,35 @@ function BackgroundScene() {
   )
 }
 
+// â”€â”€â”€ Language Cycler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function LanguageCycler({ texts, interval = 3000, style = {} }: { texts: string[]; interval?: number; style?: React.CSSProperties }) {
+  const [index, setIndex] = useState(0)
+  const [visible, setVisible] = useState(true)
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setVisible(false)
+      setTimeout(() => {
+        setIndex(i => (i + 1) % texts.length)
+        setVisible(true)
+      }, 400)
+    }, interval)
+    return () => clearInterval(timer)
+  }, [texts.length, interval])
+
+  return (
+    <span style={{
+      ...style,
+      display: 'inline-block',
+      transition: 'opacity 0.4s ease, transform 0.4s ease',
+      opacity: visible ? 1 : 0,
+      transform: visible ? 'translateY(0)' : 'translateY(8px)',
+    }}>
+      {texts[index]}
+    </span>
+  )
+}
+
 // â”€â”€â”€ Main Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export default function LandingPage() {
   const cursorRef = useRef<HTMLDivElement>(null)
@@ -1137,10 +1166,10 @@ export default function LandingPage() {
               <a key={l} href={h} className="nav-link">{l}</a>
             ))}
             {/* Patient Portal nav link restored from v1 */}
-            <Link href="/patient" className="btn-patient" style={{ padding:'6px 16px',fontSize:'.72rem' }}>ðŸ¥ Patient Portal</Link>
+            <Link href="/patient" className="btn-patient" style={{ padding:'6px 16px',fontSize:'.72rem' }}>ðŸ¥ <LanguageCycler texts={['Patient Portal', 'à²°à³‹à²—à²¿ à²ªà³‹à²°à³à²Ÿà²²à³']} interval={3500} /></Link>
           </div>
           <Link href="/login" className="btn-main" style={{ padding:'9px 24px',fontSize:'.78rem' }}>
-            Doctor Login
+            <LanguageCycler texts={['Doctor Login', 'à²¡à²¾à²•à³à²Ÿà²°à³ à²²à²¾à²—à²¿à²¨à³']} interval={3500} />
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </Link>
         </nav>
@@ -1153,23 +1182,27 @@ export default function LandingPage() {
             <div>
               <div className="holo-badge fade-up" style={{ marginBottom:28 }}>
                 <span style={{ width:6,height:6,borderRadius:'50%',background:'#22d3ee',boxShadow:'0 0 10px #22d3ee',animation:'blink2 2s infinite',flexShrink:0 }}/>
-                AI-Powered Voice Intelligence
+                <LanguageCycler texts={['AI-Powered Voice Intelligence', 'AI-à²†à²§à²¾à²°à²¿à²¤ à²§à³à²µà²¨à²¿ à²¬à³à²¦à³à²§à²¿à²®à²¤à³à²¤à³†']} interval={3500} />
               </div>
               <h1 className="fade-up d1" style={{ fontFamily:'Outfit,sans-serif',fontSize:'clamp(2.6rem,4.5vw,4.4rem)',fontWeight:900,lineHeight:1.04,letterSpacing:'-.03em',color:'#f8fafc',marginBottom:20 }}>
-                The AI that listens<br/>
-                <span style={{ background:'linear-gradient(135deg,#22d3ee 0%,#818cf8 45%,#34d399 100%)',backgroundSize:'200% 200%',animation:'gradShift 5s ease infinite',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent' }}>
-                  while you consult.
-                </span>
-              </h1>
+                <LanguageCycler texts={['The AI that listens', 'à²•à³‡à²³à³à²µ AI']} interval={3500} /><br/>
+                <LanguageCycler texts={['while you consult.', 'à²¨à³€à²µà³ à²¸à²®à²¾à²²à³‹à²šà²¨à³† à²®à²¾à²¡à³à²µà²¾à²—']} interval={3500} /><br/>
+              </h1><br/>
               <p className="fade-up d2" style={{ fontSize:'.98rem',lineHeight:1.82,color:'#64748b',maxWidth:480,marginBottom:40 }}>
-                Purpose-built for Healthcare and Finance professionals. Speak in any language â€” AI transcribes, extracts critical entities, and delivers structured reports in seconds.
+                <LanguageCycler
+                  texts={[
+                    'Purpose-built for Healthcare and Finance professionals. Speak in any language â€” AI transcribes, extracts critical entities, and delivers structured reports in seconds.',
+                    'à²†à²°à³‹à²—à³à²¯ à²®à²¤à³à²¤à³ à²¹à²£à²•à²¾à²¸à³ à²µà³ƒà²¤à³à²¤à²¿à²ªà²°à²°à²¿à²—à²¾à²—à²¿ à²‰à²¦à³à²¦à³‡à²¶à²¿à²¤: à²¯à²¾à²µà³à²¦à³‡ à²­à²¾à²·à³†à²¯à²²à³à²²à²¿ à²®à²¾à²¤à²¨à²¾à²¡à²¿ - AI à²²à²¿à²ªà³à²¯à²‚à²¤à²° à²®à²¾à²¡à³à²¤à³à²¤à²¦à³†, à²¨à²¿à²°à³à²£à²¾à²¯à²• à²˜à²Ÿà²•à²—à²³à²¨à³à²¨à³ à²¹à³Šà²°à²¤à³†à²—à³†à²¯à³à²¤à³à²¤à²¦à³† à²®à²¤à³à²¤à³ à²¸à³†à²•à³†à²‚à²¡à³à²—à²³à²²à³à²²à²¿ à²°à²šà²¨à²¾à²¤à³à²®à²• à²µà²°à²¦à²¿à²—à²³à²¨à³à²¨à³ à²¨à³€à²¡à³à²¤à³à²¤à²¦à³†.',
+                  ]}
+                  interval={3500}
+                />
               </p>
               <div className="fade-up d3" style={{ display:'flex',gap:14,flexWrap:'wrap',marginBottom:32 }}>
                 <Link href="/login" className="btn-main">
-                  Doctor Login
+                  <LanguageCycler texts={['Doctor Login', 'à²¡à²¾à²•à³à²Ÿà²°à³ à²²à²¾à²—à²¿à²¨à³']} interval={3500} />
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                 </Link>
-                <Link href="#domains" className="btn-ghost">See It In Action</Link>
+                <Link href="#domains" className="btn-ghost"><LanguageCycler texts={['See It In Action', 'à²•à³à²°à²¿à²¯à³†à²¯à²²à³à²²à²¿ à²¨à³‹à²¡à²¿']} interval={3500} /></Link>
               </div>
 
               {/* â”€â”€ Patient Portal CTA in hero (from v1) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
@@ -1178,13 +1211,17 @@ export default function LandingPage() {
                   <span style={{ fontSize:18 }}>ðŸ¥</span>
                 </div>
                 <div style={{ flex:1 }}>
-                  <p style={{ fontSize:'.82rem',fontWeight:700,color:'#c7d2fe',marginBottom:2 }}>Are you a patient?</p>
-                  <p style={{ fontSize:'.75rem',color:'#6b7280' }}>View your reports, medications, and summaries</p>
+                  <p style={{ fontSize:'.82rem',fontWeight:700,color:'#c7d2fe',marginBottom:2 }}>
+                    <LanguageCycler texts={['Are you a patient?', 'à²¨à³€à²µà³ à²°à³‹à²—à²¿à²¯à³‡?']} interval={3500} />
+                  </p>
+                  <p style={{ fontSize:'.75rem',color:'#6b7280' }}>
+                    <LanguageCycler texts={['View your reports, medications, and summaries', 'à²¨à²¿à²®à³à²® à²µà²°à²¦à²¿à²—à²³à³, à²”à²·à²§à²¿à²—à²³à³ à²¨à³‹à²¡à²¿']} interval={3500} />
+                  </p>
                 </div>
                 <Link href="/patient" style={{ display:'inline-flex',alignItems:'center',gap:6,padding:'8px 16px',borderRadius:100,background:'linear-gradient(135deg,#6366f1,#4f46e5)',color:'#fff',fontSize:'.75rem',fontWeight:700,textDecoration:'none',fontFamily:'Outfit,sans-serif',flexShrink:0,boxShadow:'0 4px 12px rgba(99,102,241,.3)',transition:'transform .2s' }}
                   onMouseEnter={e=>(e.currentTarget as HTMLAnchorElement).style.transform='scale(1.05)'}
                   onMouseLeave={e=>(e.currentTarget as HTMLAnchorElement).style.transform='none'}>
-                  Open Portal â†’
+                  <LanguageCycler texts={['Open Portal â†’', 'à²ªà³‹à²°à³à²Ÿà²²à³ à²¤à³†à²°à³†à²¯à²¿à²°à²¿ â†’']} interval={3500} />
                 </Link>
               </div>
 
@@ -1276,12 +1313,12 @@ export default function LandingPage() {
 
           <div style={{ maxWidth:1380,margin:'0 auto',padding:'0 56px' }}>
             <Reveal style={{ textAlign:'center',marginBottom:80 }}>
-              <div className="sec-label" style={{ justifyContent:'center' }}>Capabilities</div>
+              <div className="sec-label" style={{ justifyContent:'center' }}><LanguageCycler texts={['Capabilities', 'à²¸à²¾à²®à²°à³à²¥à³à²¯à²—à²³à³']} interval={3500} /></div>
               <h2 style={{ fontFamily:'Outfit,sans-serif',fontSize:'clamp(1.9rem,3.2vw,3rem)',fontWeight:900,color:'#f8fafc',lineHeight:1.08,marginBottom:16,letterSpacing:'-.02em' }}>
-                Enterprise AI built for<br/>
-                <span style={{ background:'linear-gradient(135deg,#22d3ee,#818cf8)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent' }}>clinical precision</span>
+                <LanguageCycler texts={['Enterprise AI built for', 'à²‰à²¦à³à²¯à²®à²—à²³à²¿à²—à²¾à²—à²¿ à²¨à²¿à²°à³à²®à²¿à²¸à²²à²¾à²¦ à²Žà²']} interval={3500} /><br/>
+                <span style={{ background:'linear-gradient(135deg,#22d3ee,#818cf8)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent' }}><LanguageCycler texts={['clinical precision', 'à²µà³ˆà²¦à³à²¯à²•à³€à²¯ à²¨à²¿à²–à²°à²¤à³†']} interval={3500} /></span>
               </h2>
-              <p style={{ fontSize:'.95rem',lineHeight:1.8,color:'#64748b',maxWidth:500,margin:'0 auto' }}>Every feature engineered to remove friction, eliminate manual work, and deliver trusted documentation.</p>
+              <p style={{ fontSize:'.95rem',lineHeight:1.8,color:'#64748b',maxWidth:500,margin:'0 auto' }}><LanguageCycler texts={['Every feature engineered to remove friction, eliminate manual work, and deliver trusted documentation.', 'à²ªà³à²°à²¤à²¿ à²µà³ˆà²¶à²¿à²·à³à²Ÿà³à²¯à²µà³‚ à²…à²¡à²šà²£à³†à²—à²³à²¨à³à²¨à³ à²¤à³†à²—à³†à²¦à³à²¹à²¾à²•à²²à³, à²•à³ˆà²¯à²¾à²°à³† à²®à²¾à²¡à³à²µ à²•à³†à²²à²¸à²µà²¨à³à²¨à³ à²•à²¡à²¿à²®à³† à²®à²¾à²¡à²²à³, à²®à²¤à³à²¤à³ à²¨à²‚à²¬à²²à²°à³à²¹ à²¦à²¾à²–à²²à³†à²—à²³à²¨à³à²¨à³ à²’à²¦à²—à²¿à²¸à²²à³ à²µà²¿à²¨à³à²¯à²¾à²¸à²—à³Šà²³à²¿à²¸à²²à²¾à²—à²¿à²¦à³†.']} interval={3500} /></p>
             </Reveal>
 
             <div className="feat-grid" style={{ display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:20,marginBottom:20 }}>
@@ -1337,13 +1374,13 @@ export default function LandingPage() {
 
           <div style={{ maxWidth: 1380, margin: '0 auto', padding: '0 56px', position: 'relative', zIndex: 1 }}>
             <Reveal style={{ textAlign: 'center', marginBottom: 32 }}>
-              <div className="sec-label" style={{ justifyContent: 'center' }}>Specialisations</div>
+              <div className="sec-label" style={{ justifyContent: 'center' }}><LanguageCycler texts={['Specialisations', 'à²µà²¿à²¶à³‡à²·à²¤à³†à²—à²³à³']} interval={3500} /></div>
               <h2 style={{ fontFamily: 'Outfit,sans-serif', fontSize: 'clamp(2rem,3.6vw,3.3rem)', fontWeight: 900, color: '#f8fafc', lineHeight: 1.06, marginBottom: 18, letterSpacing: '-.025em' }}>
-                Two Domains.<br />
-                <span style={{ background: 'linear-gradient(135deg,#22d3ee,#818cf8,#34d399)', backgroundSize: '200% 200%', animation: 'gradShift 5s ease infinite', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontStyle: 'italic' }}>One Unified Engine.</span>
+                <LanguageCycler texts={['Two Domains.', 'à²Žà²°à²¡à³ à²•à³à²·à³‡à²¤à³à²°à²—à²³à³.']} interval={3500} /><br />
+                <span style={{ background: 'linear-gradient(135deg,#22d3ee,#818cf8,#34d399)', backgroundSize: '200% 200%', animation: 'gradShift 5s ease infinite', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontStyle: 'italic' }}><LanguageCycler texts={['One Unified Engine.', 'à²’à²‚à²¦à³ à²à²•à³€à²•à³ƒà²¤ à²Žà²‚à²œà²¿à²¨à³.']} interval={3500} /></span>
               </h2>
               <p style={{ fontSize: '.95rem', lineHeight: 1.8, color: '#64748b', maxWidth: 520, margin: '0 auto' }}>
-                Purpose-built AI pipelines for each domain â€” same elegant interface, specialised intelligence underneath.
+                <LanguageCycler texts={['Purpose-built AI pipelines for each domain â€” same elegant interface, specialised intelligence underneath.', 'à²ªà³à²°à²¤à²¿ à²•à³à²·à³‡à²¤à³à²°à²•à³à²•à³† à²‰à²¦à³à²¦à³‡à²¶à²ªà³‚à²°à³à²µà²•à²µà²¾à²—à²¿ à²°à²šà²¿à²¸à²²à²¾à²¦ AI â€” à²’à²‚à²¦à³‡ à²¸à³à²‚à²¦à²° à²‡à²‚à²Ÿà²°à³à²«à³‡à²¸à³, à²µà²¿à²¶à³‡à²· à²¬à³à²¦à³à²§à²¿à²®à²¤à³à²¤à³†.']} interval={3500} />
               </p>
             </Reveal>
 
@@ -1413,10 +1450,10 @@ export default function LandingPage() {
           <div style={{ position:'absolute',inset:0,background:'radial-gradient(ellipse at 50% 50%,rgba(34,211,238,.03),transparent 70%)',pointerEvents:'none' }}/>
           <div style={{ maxWidth:1380,margin:'0 auto',padding:'0 56px',position:'relative',zIndex:1 }}>
             <Reveal style={{ textAlign:'center',marginBottom:84 }}>
-              <div className="sec-label" style={{ justifyContent:'center' }}>Workflow</div>
+              <div className="sec-label" style={{ justifyContent:'center' }}><LanguageCycler texts={['Workflow', 'à²•à²¾à²°à³à²¯à²µà²¿à²§à²¾à²¨']} interval={3500} /></div>
               <h2 style={{ fontFamily:'Outfit,sans-serif',fontSize:'clamp(1.9rem,3.2vw,3rem)',fontWeight:900,color:'#f8fafc',lineHeight:1.08,marginBottom:14,letterSpacing:'-.02em' }}>
-                Voice to report<br/>
-                <span style={{ background:'linear-gradient(135deg,#22d3ee,#818cf8)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent' }}>in under two minutes.</span>
+                <LanguageCycler texts={['Voice to report', 'à²§à³à²µà²¨à²¿à²¯à²¿à²‚à²¦ à²µà²°à²¦à²¿à²—à³†']} interval={3500} /><br/>
+                <span style={{ background:'linear-gradient(135deg,#22d3ee,#818cf8)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent' }}><LanguageCycler texts={['in under two minutes.', 'à²Žà²°à²¡à³ à²¨à²¿à²®à²¿à²·à²¦à²²à³à²²à²¿.']} interval={3500} /></span>
               </h2>
             </Reveal>
             <div className="steps-grid" style={{ display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:0,position:'relative' }}>
@@ -1450,10 +1487,10 @@ export default function LandingPage() {
           </div>
           <div style={{ maxWidth:1380,margin:'0 auto',padding:'0 56px',position:'relative',zIndex:1 }}>
             <Reveal style={{ textAlign:'center',marginBottom:68 }}>
-              <div className="sec-label" style={{ justifyContent:'center' }}>Impact</div>
+              <div className="sec-label" style={{ justifyContent:'center' }}><LanguageCycler texts={['Impact', 'à²ªà²°à²¿à²£à²¾à²®']} interval={3500} /></div>
               <h2 style={{ fontFamily:'Outfit,sans-serif',fontSize:'clamp(1.9rem,3.2vw,3rem)',fontWeight:900,color:'#f8fafc',lineHeight:1.08,letterSpacing:'-.02em' }}>
-                Numbers that define<br/>
-                <span style={{ background:'linear-gradient(135deg,#22d3ee,#818cf8)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent' }}>our standard.</span>
+                <LanguageCycler texts={['Numbers that define', 'à²¸à²‚à²–à³à²¯à³†à²—à²³à³ à²¹à³‡à²³à³à²¤à³à²¤à²µà³†']} interval={3500} /><br/>
+                <span style={{ background:'linear-gradient(135deg,#22d3ee,#818cf8)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent' }}><LanguageCycler texts={['our standard.', 'à²¨à²®à³à²® à²—à³à²£à²®à²Ÿà³à²Ÿ.']} interval={3500} /></span>
               </h2>
             </Reveal>
             <div className="stats-grid" style={{ display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:18,perspective:1200 }}>
@@ -1469,10 +1506,10 @@ export default function LandingPage() {
           </div>
           <div style={{ maxWidth:1380,margin:'0 auto',padding:'0 56px' }}>
             <Reveal style={{ textAlign:'center',marginBottom:80 }}>
-              <div className="sec-label" style={{ justifyContent:'center' }}>Testimonials</div>
+              <div className="sec-label" style={{ justifyContent:'center' }}><LanguageCycler texts={['Testimonials', 'à²ªà³à²°à²¶à²‚à²¸à³†à²—à²³à³']} interval={3500} /></div>
               <h2 style={{ fontFamily:'Outfit,sans-serif',fontSize:'clamp(1.9rem,3.2vw,3rem)',fontWeight:900,color:'#f8fafc',lineHeight:1.08,marginBottom:14,letterSpacing:'-.02em' }}>
-                Trusted by those who<br/>
-                <span style={{ background:'linear-gradient(135deg,#22d3ee,#818cf8)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent' }}>demand precision.</span>
+                <LanguageCycler texts={['Trusted by those who', 'à²¨à²‚à²¬à²¿à²¦à²µà²°à²¿à²‚à²¦']} interval={3500} /><br/>
+                <span style={{ background:'linear-gradient(135deg,#22d3ee,#818cf8)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent' }}><LanguageCycler texts={['demand precision.', 'à²¨à²¿à²–à²°à²¤à³† à²¬à²¯à²¸à³à²µà²µà²°à³.']} interval={3500} /></span>
               </h2>
             </Reveal>
             <div className="testi-grid" style={{ display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:20,alignItems:'start' }}>
@@ -1521,20 +1558,20 @@ export default function LandingPage() {
                 <div style={{ position:'absolute',top:20,right:160,opacity:.2 }}><Icosahedron size={60} color="#22d3ee" speed="22s"/></div>
                 <div style={{ position:'absolute',bottom:20,left:160,opacity:.15 }}><Icosahedron size={50} color="#818cf8" speed="18s"/></div>
                 <div style={{ position:'absolute',inset:0,background:'radial-gradient(ellipse at 30% 50%,rgba(34,211,238,.06),transparent 60%),radial-gradient(ellipse at 70% 50%,rgba(129,140,248,.04),transparent 60%)',pointerEvents:'none' }}/>
-                <div className="sec-label" style={{ justifyContent:'center',marginBottom:18 }}>Get Started</div>
+                <div className="sec-label" style={{ justifyContent:'center',marginBottom:18 }}><LanguageCycler texts={['Get Started', 'à²ªà³à²°à²¾à²°à²‚à²­à²¿à²¸à²¿']} interval={3500} /></div>
                 <h2 style={{ fontFamily:'Outfit,sans-serif',fontSize:'clamp(2rem,3.8vw,3.4rem)',fontWeight:900,color:'#f8fafc',lineHeight:1.06,marginBottom:18,position:'relative',zIndex:1,letterSpacing:'-.025em' }}>
-                  Ready to redefine<br/>your practice?
+                  <LanguageCycler texts={['Ready to redefine', 'à²¨à²¿à²®à³à²® à²…à²­à³à²¯à²¾à²¸à²µà²¨à³à²¨à³']} interval={3500} /><br/><LanguageCycler texts={['your practice?', 'à²®à²°à³à²µà³à²¯à²¾à²–à³à²¯à²¾à²¨à²¿à²¸à²²à³ à²¸à²¿à²¦à³à²§à²°à³‡?']} interval={3500} />
                 </h2>
                 <p style={{ fontSize:'.95rem',color:'#64748b',maxWidth:440,margin:'0 auto 44px',lineHeight:1.82,position:'relative',zIndex:1 }}>
-                  Join 500+ healthcare and finance professionals delivering faster, more accurate outcomes with AI-powered voice documentation.
+                  <LanguageCycler texts={['Join 500+ healthcare and finance professionals delivering faster, more accurate outcomes with AI-powered voice documentation.', '500+ à²†à²°à³‹à²—à³à²¯ à²®à²¤à³à²¤à³ à²¹à²£à²•à²¾à²¸à³ à²µà³ƒà²¤à³à²¤à²¿à²ªà²°à²°à³‹à²¡à²¨à³† à²¸à³‡à²°à²¿ à²µà³‡à²—à²µà²¾à²—à²¿ à²®à²¤à³à²¤à³ à²¨à²¿à²–à²°à²µà²¾à²—à²¿ AI à²§à³à²µà²¨à²¿ à²¦à²¾à²–à²²à³†à²—à²³à²¨à³à²¨à³ à²¨à³€à²¡à²¿.']} interval={3500} />
                 </p>
                 <div style={{ display:'flex',gap:14,justifyContent:'center',flexWrap:'wrap',position:'relative',zIndex:1 }}>
                   <Link href="/login" className="btn-main">
-                    Doctor Login
+                    <LanguageCycler texts={['Doctor Login', 'à²¡à²¾à²•à³à²Ÿà²°à³ à²²à²¾à²—à²¿à²¨à³']} interval={3500} />
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                   </Link>
                   {/* Patient Portal ghost button in CTA (from v1) */}
-                  <Link href="/patient" className="btn-ghost">Patient Portal ðŸ¥</Link>
+                  <Link href="/patient" className="btn-ghost"><LanguageCycler texts={['Patient Portal', 'à²°à³‹à²—à²¿ à²ªà³‹à²°à³à²Ÿà²²à³']} interval={3500} /> ðŸ¥</Link>
                 </div>
               </div>
             </Reveal>
@@ -1558,7 +1595,7 @@ export default function LandingPage() {
                 >{l}</a>
               ))}
               {/* Patient Portal footer link (from v1) */}
-              <Link href="/patient" style={{ fontSize:'.73rem',color:'#6366f1',textDecoration:'none',fontFamily:'JetBrains Mono,monospace' }}>ðŸ¥ Patient Portal</Link>
+              <Link href="/patient" style={{ fontSize:'.73rem',color:'#6366f1',textDecoration:'none',fontFamily:'JetBrains Mono,monospace' }}>ðŸ¥ <LanguageCycler texts={['Patient Portal', 'à²°à³‹à²—à²¿ à²ªà³‹à²°à³à²Ÿà²²à³']} interval={3500} /></Link>
             </div>
             <p style={{ fontFamily:'JetBrains Mono,monospace',fontSize:'.62rem',color:'#1e293b' }}>Â© 2026 MediFi Voice Â· Powered by Groq & Sarvam AI</p>
           </div>
@@ -1574,6 +1611,35 @@ export default function LandingPage() {
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+
+// â”€â”€â”€ Language Cycler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function LanguageCycler({ texts, interval = 3000, style = {} }: { texts: string[]; interval?: number; style?: React.CSSProperties }) {
+  const [index, setIndex] = useState(0)
+  const [visible, setVisible] = useState(true)
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setVisible(false)
+      setTimeout(() => {
+        setIndex(i => (i + 1) % texts.length)
+        setVisible(true)
+      }, 400)
+    }, interval)
+    return () => clearInterval(timer)
+  }, [texts.length, interval])
+
+  return (
+    <span style={{
+      ...style,
+      display: 'inline-block',
+      transition: 'opacity 0.4s ease, transform 0.4s ease',
+      opacity: visible ? 1 : 0,
+      transform: visible ? 'translateY(0)' : 'translateY(8px)',
+    }}>
+      {texts[index]}
+    </span>
+  )
+}
 
 export default function LoginPage() {
   const router = useRouter()
@@ -2352,12 +2418,12 @@ export default function LoginPage() {
             fontFamily: 'Outfit', fontWeight: 900, fontSize: '1.6rem', color: '#f8fafc',
             letterSpacing: '-.025em', marginBottom: 6, lineHeight: 1.1,
           }}>
-            MediFi <span className="grad-span">Voice</span>
+            <LanguageCycler texts={['MediFi', 'à²®à³†à²¡à²¿à²«à²¿']} interval={3500} /> <span className="grad-span"><LanguageCycler texts={['Voice', 'à²§à³à²µà²¨à²¿']} interval={3500} /></span>
           </h1>
           <p style={{
             fontFamily: 'JetBrains Mono', fontSize: '.68rem', color: '#475569',
             letterSpacing: '.12em', textTransform: 'uppercase',
-          }}>Sign in to continue</p>
+          }}><LanguageCycler texts={['Sign in to continue', 'à²®à³à²‚à²¦à³à²µà²°à²¿à²¯à²²à³ à²¸à³ˆà²¨à³ à²‡à²¨à³ à²®à²¾à²¡à²¿']} interval={3500} /></p>
         </div>
 
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 18, position: 'relative', zIndex: 4 }}>
@@ -2367,7 +2433,7 @@ export default function LoginPage() {
                 background: focusedField === 'email' ? '#22d3ee' : '#334155',
                 boxShadow: focusedField === 'email' ? '0 0 6px #22d3ee' : 'none',
               }} />
-              Email
+              <LanguageCycler texts={['Email', 'à²‡à²®à³‡à²²à³']} interval={3500} />
             </div>
             <div className="input-wrapper">
               <div className="input-icon">
@@ -2395,7 +2461,7 @@ export default function LoginPage() {
                 background: focusedField === 'password' ? '#818cf8' : '#334155',
                 boxShadow: focusedField === 'password' ? '0 0 6px #818cf8' : 'none',
               }} />
-              Password
+              <LanguageCycler texts={['Password', 'à²ªà²¾à²¸à³â€Œà²µà²°à³à²¡à³']} interval={3500} />
             </div>
             <div className="input-wrapper">
               <div className="input-icon">
@@ -2446,11 +2512,11 @@ export default function LoginPage() {
             {loading ? (
               <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
                 <span className="spinner" />
-                Authenticating...
+                <LanguageCycler texts={['Authenticating...', 'à²¦à³ƒà²¢à³€à²•à²°à²¿à²¸à²²à²¾à²—à³à²¤à³à²¤à²¿à²¦à³†...']} interval={3500} />
               </span>
             ) : (
               <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                Sign In
+                <LanguageCycler texts={['Sign In', 'à²¸à³ˆà²¨à³ à²‡à²¨à³ à²®à²¾à²¡à²¿']} interval={3500} />
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
                 </svg>
@@ -2464,26 +2530,26 @@ export default function LoginPage() {
             <span style={{
               fontFamily: 'JetBrains Mono', fontSize: '.62rem', color: '#334155',
               letterSpacing: '.12em', textTransform: 'uppercase',
-            }}>Demo Accounts</span>
+            }}><LanguageCycler texts={['Demo Accounts', 'à²¡à³†à²®à³‹ à²–à²¾à²¤à³†à²—à²³à³']} interval={3500} /></span>
           </div>
           <div style={{ display: 'flex', gap: 10 }}>
             <button className="demo-btn demo-btn-doctor" onClick={() => fillDemo('doctor')}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="2" style={{ opacity: .7 }}>
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
               </svg>
-              Doctor
+              <LanguageCycler texts={['Doctor', 'à²µà³ˆà²¦à³à²¯à²°à³']} interval={3500} />
             </button>
             <button className="demo-btn demo-btn-finance" onClick={() => fillDemo('finance')}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2" style={{ opacity: .7 }}>
                 <line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
               </svg>
-              Finance
+              <LanguageCycler texts={['Finance', 'à²¹à²£à²•à²¾à²¸à³']} interval={3500} />
             </button>
             <button className="demo-btn demo-btn-admin" onClick={() => fillDemo('admin')}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="2" style={{ opacity: .7 }}>
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
-              Admin
+              <LanguageCycler texts={['Admin', 'à²¨à²¿à²°à³à²µà²¾à²¹à²•']} interval={3500} />
             </button>
           </div>
         </div>
@@ -2497,7 +2563,7 @@ export default function LoginPage() {
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           </svg>
           <span style={{ fontFamily: 'JetBrains Mono', fontSize: '.58rem', color: '#1e293b', letterSpacing: '.08em' }}>
-            256-BIT ENCRYPTED Â· HIPAA COMPLIANT
+            <LanguageCycler texts={['256-BIT ENCRYPTED Â· HIPAA COMPLIANT', '256-à²¬à²¿à²Ÿà³ à²Žà²¨à³â€Œà²•à³à²°à²¿à²ªà³à²Ÿà³†à²¡à³ Â· HIPAA à²…à²¨à³à²¸à²°à²£à³†']} interval={3500} />
           </span>
         </div>
       </div>
@@ -3486,6 +3552,35 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { format } from 'date-fns/format'
 
+// â”€â”€â”€ Language Cycler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function LanguageCycler({ texts, interval = 3000, style = {} }: { texts: string[]; interval?: number; style?: React.CSSProperties }) {
+  const [index, setIndex] = useState(0)
+  const [visible, setVisible] = useState(true)
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setVisible(false)
+      setTimeout(() => {
+        setIndex(i => (i + 1) % texts.length)
+        setVisible(true)
+      }, 400)
+    }, interval)
+    return () => clearInterval(timer)
+  }, [texts.length, interval])
+
+  return (
+    <span style={{
+      ...style,
+      display: 'inline-block',
+      transition: 'opacity 0.4s ease, transform 0.4s ease',
+      opacity: visible ? 1 : 0,
+      transform: visible ? 'translateY(0)' : 'translateY(8px)',
+    }}>
+      {texts[index]}
+    </span>
+  )
+}
+
 // â”€â”€â”€ ECG Line SVG â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function ECGLine({ color = '#22d3ee', width = 300, opacity = 0.6 }: { color?: string; width?: number; opacity?: number }) {
   const id = `ecg-${color.replace('#', '')}-${width}`
@@ -3738,7 +3833,7 @@ function InputField({
   label, placeholder, value, onChange, onKeyDown, type = 'text',
   icon, focused, onFocus, onBlur, accentRgb, accent, required = false, maxLength,
 }: {
-  label: string; placeholder: string; value: string;
+  label: React.ReactNode; placeholder: string; value: string;
   onChange: (v: string) => void; onKeyDown?: (e: React.KeyboardEvent) => void;
   type?: string; icon: React.ReactNode; focused: boolean;
   onFocus: () => void; onBlur: () => void;
@@ -3853,6 +3948,483 @@ function StaticCard({ children, accentRgb, accent2Rgb, style = {} }: {
   )
 }
 
+// â”€â”€â”€ Entity color palette (shared with session page) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const ENTITY_COLORS: Record<string, string> = {
+  symptoms: '#F87171', medications: '#2dd4bf', diseases: '#F59E0B',
+  procedures: '#60A5FA', bodyParts: '#A78BFA', severity: '#F87171',
+  duration: '#6EE7B7', frequency: '#FCD34D',
+  income: '#34D399', expenses: '#F87171', investments: '#60A5FA',
+  taxes: '#FBBF24', loans: '#F472B6', insurance: '#A78BFA',
+  goals: '#6EE7B7', amounts: '#FCD34D', timeframes: '#93C5FD', taxSections: '#86EFAC',
+}
+
+// â”€â”€â”€ Health / Finance Timeline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function HealthTimeline({ sessions, accent, accentRgb, accent2Rgb, isHC, router, personName, domain }: {
+  sessions: any[]; accent: string; accentRgb: string; accent2Rgb: string; isHC: boolean; router: any; personName: string; domain: string
+}) {
+  const [activeTab, setActiveTab] = useState<'timeline' | 'symptoms' | 'medications' | 'summary'>('timeline')
+  const [aiSummary, setAiSummary] = useState<string | null>(null)
+  const [summaryLoading, setSummaryLoading] = useState(false)
+  const [summaryError, setSummaryError] = useState<string | null>(null)
+  const [summaryLang, setSummaryLang] = useState<'KANNADA' | 'ENGLISH' | 'HINDI'>('KANNADA')
+
+  // â”€â”€ Aggregate entities across all sessions â”€â”€
+  const entityAgg: Record<string, Map<string, number>> = {}
+  const allMeds: Map<string, { count: number; lastSeen: string }> = new Map()
+  const allSymptoms: Map<string, { count: number; sessions: string[] }> = new Map()
+
+  sessions.forEach(s => {
+    const ner = s.nerEntities as Record<string, string[]> | null
+    if (!ner) return
+    Object.entries(ner).forEach(([cat, vals]) => {
+      if (!Array.isArray(vals) || vals.length === 0) return
+      if (!entityAgg[cat]) entityAgg[cat] = new Map()
+      vals.forEach(v => {
+        const key = String(v).trim()
+        if (!key) return
+        const lower = key.toLowerCase()
+        entityAgg[cat]!.set(lower, (entityAgg[cat]!.get(lower) || 0) + 1)
+
+        // Track medications separately
+        if (cat === 'medications') {
+          const existing = allMeds.get(lower)
+          allMeds.set(lower, {
+            count: (existing?.count || 0) + 1,
+            lastSeen: s.createdAt,
+          })
+        }
+        // Track symptoms separately
+        if (cat === 'symptoms') {
+          const existing = allSymptoms.get(lower)
+          allSymptoms.set(lower, {
+            count: (existing?.count || 0) + 1,
+            sessions: [...(existing?.sessions || []), format(new Date(s.createdAt), 'MMM dd')],
+          })
+        }
+      })
+    })
+  })
+
+  // Stats
+  const recurringSymptoms = [...allSymptoms.values()].filter(s => s.count > 1).length
+  const activeMedCount = allMeds.size
+  const lastSeenDate = sessions.length > 0 ? new Date(sessions[0].createdAt) : null
+  const daysSinceLastVisit = lastSeenDate ? Math.floor((Date.now() - lastSeenDate.getTime()) / (1000 * 60 * 60 * 24)) : null
+  const lastSeenText = daysSinceLastVisit !== null
+    ? daysSinceLastVisit === 0 ? 'Today' : daysSinceLastVisit === 1 ? '1 day ago' : `${daysSinceLastVisit} days ago`
+    : 'â€”'
+
+  if (sessions.length === 0) return null
+
+  // Get chief complaint for a session
+  const getChiefComplaint = (s: any): string => {
+    const ed = s.extractedData as any
+    if (ed?.chiefComplaint) return ed.chiefComplaint
+    // Fallback: combine top symptoms
+    const ner = s.nerEntities as Record<string, string[]> | null
+    if (ner?.symptoms?.length) return ner.symptoms.slice(0, 3).join(', ')
+    if (ner?.goals?.length) return ner.goals.slice(0, 2).join(', ')
+    return s.department.replace(/_/g, ' ') + ' consultation'
+  }
+
+  // Get all entity tags for a session (for timeline display)
+  const getSessionTags = (s: any): { label: string; color: string }[] => {
+    const ner = s.nerEntities as Record<string, string[]> | null
+    if (!ner) return []
+    const tags: { label: string; color: string }[] = []
+    const priorityKeys = isHC
+      ? ['symptoms', 'medications', 'diseases', 'procedures']
+      : ['investments', 'goals', 'taxes', 'income']
+    priorityKeys.forEach(k => {
+      if (ner[k]?.length) {
+        ner[k].slice(0, 3).forEach(v => {
+          if (tags.length < 5) {
+            // Mark diseases with " â€” suspected" suffix
+            const suffix = k === 'diseases' ? ' â€” suspected' : ''
+            tags.push({ label: v + suffix, color: ENTITY_COLORS[k] || '#94a3b8' })
+          }
+        })
+      }
+    })
+    return tags
+  }
+
+  const TABS = [
+    { id: 'timeline' as const, label: 'Timeline' },
+    { id: 'symptoms' as const, label: 'Symptom trends' },
+    { id: 'medications' as const, label: 'Medications' },
+    { id: 'summary' as const, label: 'AI summary' },
+  ]
+
+  return (
+    <div className="pl-fade pl-d4" style={{ marginBottom: 16 }}>
+      <StaticCard accentRgb={accentRgb} accent2Rgb={accent2Rgb}>
+        <div style={{ padding: '28px 28px 24px', position: 'relative', zIndex: 4 }}>
+
+          {/* â”€â”€ Stats Row â”€â”€ */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 0, marginBottom: 22 }}>
+            {[
+              { label: 'Total visits', val: String(sessions.length), color: accent },
+              { label: 'Recurring symptoms', val: String(recurringSymptoms), color: '#F87171' },
+              { label: isHC ? 'Active medications' : 'Active investments', val: String(activeMedCount), color: '#2dd4bf' },
+              { label: 'Last seen', val: lastSeenText, color: '#94a3b8' },
+            ].map((stat, i) => (
+              <div key={stat.label} style={{ textAlign: i === 0 ? 'left' : 'left', padding: '0 12px', borderLeft: i > 0 ? '1px solid rgba(255,255,255,.04)' : 'none' }}>
+                <div style={{ fontFamily: 'JetBrains Mono', fontSize: '.56rem', color: '#64748b', letterSpacing: '.04em', marginBottom: 4 }}>
+                  {stat.label}
+                </div>
+                <div style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '1.15rem', color: stat.color, lineHeight: 1 }}>
+                  {stat.val}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* â”€â”€ Tab Bar â”€â”€ */}
+          <div style={{
+            display: 'flex', gap: 2, padding: 3, marginBottom: 20,
+            background: 'rgba(255,255,255,.02)', border: '1px solid rgba(255,255,255,.05)',
+            borderRadius: 10,
+          }}>
+            {TABS.map(tab => (
+              <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
+                flex: 1, padding: '9px 12px', borderRadius: 8, border: 'none',
+                background: activeTab === tab.id ? 'rgba(255,255,255,.06)' : 'transparent',
+                color: activeTab === tab.id ? '#f1f5f9' : '#475569',
+                fontSize: '.72rem', fontFamily: 'Outfit', fontWeight: activeTab === tab.id ? 700 : 500,
+                cursor: 'pointer', transition: 'all .2s',
+                borderBottom: activeTab === tab.id ? `2px solid ${accent}` : '2px solid transparent',
+              }}>
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* â•â•â•â•â•â•â• TIMELINE TAB â•â•â•â•â•â•â• */}
+          {activeTab === 'timeline' && (
+            <div style={{ position: 'relative', paddingLeft: 28 }}>
+              {/* Timeline line */}
+              <div style={{
+                position: 'absolute', left: 8, top: 6, bottom: 6, width: 2,
+                background: `linear-gradient(180deg, rgba(${accentRgb},.28), rgba(${accentRgb},.05))`,
+                borderRadius: 2,
+              }} />
+
+              {sessions.map((s: any, i: number) => {
+                const chiefComplaint = getChiefComplaint(s)
+                const tags = getSessionTags(s)
+                const dotColors = ['#22d3ee', '#60a5fa', '#f59e0b', '#a78bfa', '#34d399', '#f472b6']
+                const dotColor = dotColors[i % dotColors.length]
+
+                return (
+                  <div key={s.id} style={{
+                    position: 'relative', paddingBottom: i < sessions.length - 1 ? 14 : 0,
+                    animation: 'fadeSlide .4s ease both',
+                    animationDelay: `${i * 60}ms`,
+                    cursor: 'pointer',
+                  }} onClick={() => router.push(`/session/${s.id}`)}>
+                    {/* Dot */}
+                    <div style={{
+                      position: 'absolute', left: -24, top: 14,
+                      width: 10, height: 10, borderRadius: '50%',
+                      background: dotColor, border: `2px solid ${dotColor}`,
+                      boxShadow: `0 0 10px ${dotColor}55`,
+                    }} />
+
+                    {/* Visit card */}
+                    <div style={{
+                      padding: '14px 18px', borderRadius: 12,
+                      background: 'rgba(255,255,255,.018)',
+                      border: '1px solid rgba(255,255,255,.05)',
+                      transition: 'border-color .2s, background .2s',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = `rgba(${accentRgb},.18)`; e.currentTarget.style.background = `rgba(${accentRgb},.025)` }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,.05)'; e.currentTarget.style.background = 'rgba(255,255,255,.018)' }}
+                    >
+                      {/* Date Â· Department */}
+                      <div style={{ fontFamily: 'JetBrains Mono', fontSize: '.58rem', color: '#64748b', letterSpacing: '.03em', marginBottom: 5 }}>
+                        {format(new Date(s.createdAt), 'dd MMM yyyy')} <span style={{ color: '#334155' }}>Â·</span> <span style={{ color: '#94a3b8' }}>{s.department.replace(/_/g, ' ')}</span>
+                      </div>
+
+                      {/* Chief complaint â€” bold title */}
+                      <div style={{
+                        fontFamily: 'Outfit', fontWeight: 700, fontSize: '.92rem',
+                        color: '#e2e8f0', lineHeight: 1.3, marginBottom: tags.length > 0 ? 10 : 0,
+                        letterSpacing: '-.01em',
+                      }}>
+                        {chiefComplaint}
+                      </div>
+
+                      {/* Entity tags */}
+                      {tags.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                          {tags.map((t, j) => (
+                            <span key={j} style={{
+                              padding: '3px 10px', borderRadius: 6,
+                              background: `${t.color}18`, color: t.color,
+                              fontFamily: 'JetBrains Mono', fontSize: '.6rem', fontWeight: 500,
+                            }}>{t.label}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* â•â•â•â•â•â•â• SYMPTOM TRENDS TAB â•â•â•â•â•â•â• */}
+          {activeTab === 'symptoms' && (
+            <div>
+              {allSymptoms.size === 0 ? (
+                <div style={{ textAlign: 'center', padding: '28px 0' }}>
+                  <p style={{ fontFamily: 'JetBrains Mono', fontSize: '.65rem', color: '#334155' }}>No symptoms recorded yet</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {[...allSymptoms.entries()]
+                    .sort((a, b) => b[1].count - a[1].count)
+                    .map(([symptom, data], i) => {
+                      const barWidth = Math.max(20, (data.count / sessions.length) * 100)
+                      const isRecurring = data.count > 1
+                      return (
+                        <div key={symptom} style={{
+                          padding: '10px 14px', borderRadius: 10,
+                          background: 'rgba(255,255,255,.015)', border: '1px solid rgba(255,255,255,.04)',
+                          animation: 'fadeSlide .3s ease both', animationDelay: `${i * 40}ms`,
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span style={{
+                                fontFamily: 'Outfit', fontWeight: 700, fontSize: '.82rem',
+                                color: '#e2e8f0', textTransform: 'capitalize',
+                              }}>{symptom}</span>
+                              {isRecurring && (
+                                <span style={{
+                                  padding: '1px 6px', borderRadius: 4,
+                                  background: '#F8717118', color: '#F87171',
+                                  fontFamily: 'JetBrains Mono', fontSize: '.5rem', fontWeight: 700,
+                                }}>RECURRING</span>
+                              )}
+                            </div>
+                            <span style={{
+                              fontFamily: 'JetBrains Mono', fontSize: '.58rem', color: accent,
+                              fontWeight: 700,
+                            }}>{data.count}Ã—</span>
+                          </div>
+                          {/* Bar */}
+                          <div style={{ height: 3, borderRadius: 2, background: 'rgba(255,255,255,.04)', overflow: 'hidden' }}>
+                            <div style={{
+                              height: '100%', borderRadius: 2, width: `${barWidth}%`,
+                              background: isRecurring
+                                ? 'linear-gradient(90deg, #F87171, #fb923c)'
+                                : `linear-gradient(90deg, ${accent}, rgba(${accentRgb},.4))`,
+                              transition: 'width .6s ease',
+                            }} />
+                          </div>
+                          <div style={{ fontFamily: 'JetBrains Mono', fontSize: '.48rem', color: '#475569', marginTop: 4, letterSpacing: '.03em' }}>
+                            Seen: {data.sessions.join(' â†’ ')}
+                          </div>
+                        </div>
+                      )
+                    })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* â•â•â•â•â•â•â• MEDICATIONS TAB â•â•â•â•â•â•â• */}
+          {activeTab === 'medications' && (
+            <div>
+              {allMeds.size === 0 ? (
+                <div style={{ textAlign: 'center', padding: '28px 0' }}>
+                  <p style={{ fontFamily: 'JetBrains Mono', fontSize: '.65rem', color: '#334155' }}>No medications recorded yet</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {[...allMeds.entries()]
+                    .sort((a, b) => b[1].count - a[1].count)
+                    .map(([med, data], i) => (
+                      <div key={med} style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '12px 16px', borderRadius: 10,
+                        background: 'rgba(255,255,255,.015)', border: '1px solid rgba(255,255,255,.04)',
+                        animation: 'fadeSlide .3s ease both', animationDelay: `${i * 40}ms`,
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div style={{
+                            width: 28, height: 28, borderRadius: 8,
+                            background: '#2dd4bf12', border: '1px solid #2dd4bf22',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 15h3" />
+                            </svg>
+                          </div>
+                          <div>
+                            <div style={{ fontFamily: 'Outfit', fontWeight: 700, fontSize: '.82rem', color: '#e2e8f0', textTransform: 'capitalize' }}>{med}</div>
+                            <div style={{ fontFamily: 'JetBrains Mono', fontSize: '.48rem', color: '#475569', marginTop: 2 }}>
+                              Last: {format(new Date(data.lastSeen), 'MMM dd, yyyy')}
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '.9rem', color: '#2dd4bf' }}>{data.count}Ã—</div>
+                          <div style={{ fontFamily: 'JetBrains Mono', fontSize: '.44rem', color: '#475569', marginTop: 1 }}>prescribed</div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* â•â•â•â•â•â•â• AI SUMMARY TAB â•â•â•â•â•â•â• */}
+          {activeTab === 'summary' && (
+            <div>
+              {/* Language selector â€” always visible */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, marginBottom: 16 }}>
+                {[
+                  { key: 'KANNADA' as const, label: 'à²•à²¨à³à²¨à²¡', short: 'à²•' },
+                  { key: 'ENGLISH' as const, label: 'English', short: 'EN' },
+                  { key: 'HINDI' as const, label: 'à¤¹à¤¿à¤‚à¤¦à¥€', short: 'à¤¹à¤¿' },
+                ].map(lang => (
+                  <button key={lang.key} onClick={() => { setSummaryLang(lang.key); setAiSummary(null); setSummaryError(null) }} style={{
+                    padding: '6px 16px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                    background: summaryLang === lang.key ? `rgba(${accentRgb},.12)` : 'rgba(255,255,255,.02)',
+                    color: summaryLang === lang.key ? accent : '#475569',
+                    fontFamily: 'Outfit', fontSize: '.74rem', fontWeight: summaryLang === lang.key ? 700 : 500,
+                    transition: 'all .2s',
+                    borderBottom: summaryLang === lang.key ? `2px solid ${accent}` : '2px solid transparent',
+                  }}>
+                    <span style={{ marginRight: 4, fontSize: '.8rem' }}>{lang.short}</span> {lang.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Generate button or loading state */}
+              {!aiSummary && !summaryLoading && (
+                <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                  <p style={{ fontFamily: 'Outfit', fontSize: '.82rem', color: '#94a3b8', marginBottom: 16, lineHeight: 1.6 }}>
+                    Generate a comprehensive AI-powered {isHC ? 'health' : 'financial'} summary by analyzing <strong style={{ color: '#e2e8f0' }}>all {sessions.length} {sessions.length === 1 ? 'visit' : 'visits'}</strong> in <strong style={{ color: accent }}>{summaryLang === 'KANNADA' ? 'à²•à²¨à³à²¨à²¡' : summaryLang === 'HINDI' ? 'à¤¹à¤¿à¤‚à¤¦à¥€' : 'English'}</strong>.
+                  </p>
+                  {summaryError && (
+                    <div style={{
+                      padding: '8px 14px', borderRadius: 8, marginBottom: 14,
+                      background: 'rgba(248,113,113,.06)', border: '1px solid rgba(248,113,113,.18)',
+                      fontFamily: 'JetBrains Mono', fontSize: '.6rem', color: '#F87171',
+                    }}>{summaryError}</div>
+                  )}
+                  <button
+                    onClick={async () => {
+                      setSummaryLoading(true)
+                      setSummaryError(null)
+                      try {
+                        const res = await fetch('/api/ai/patient-summary', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ sessions, personName, domain, language: summaryLang }),
+                        })
+                        if (!res.ok) {
+                          const err = await res.json()
+                          throw new Error(err.error || 'Failed to generate')
+                        }
+                        const { summary } = await res.json()
+                        setAiSummary(summary)
+                      } catch (e: any) {
+                        setSummaryError(e.message || 'Something went wrong')
+                      } finally {
+                        setSummaryLoading(false)
+                      }
+                    }}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 9,
+                      padding: '12px 28px', borderRadius: 12,
+                      background: `linear-gradient(135deg, rgba(${accentRgb},.14), rgba(${accentRgb},.05))`,
+                      border: `1px solid rgba(${accentRgb},.2)`,
+                      color: accent, fontSize: '.82rem', fontFamily: 'Outfit', fontWeight: 700,
+                      cursor: 'pointer', position: 'relative', overflow: 'hidden',
+                      boxShadow: `0 4px 16px rgba(0,0,0,.3), 0 0 20px rgba(${accentRgb},.06)`,
+                      transition: 'all .25s',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = `0 8px 24px rgba(0,0,0,.4),0 0 28px rgba(${accentRgb},.1)` }}
+                    onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = `0 4px 16px rgba(0,0,0,.3),0 0 20px rgba(${accentRgb},.06)` }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                    Generate AI Summary
+                  </button>
+                </div>
+              )}
+
+              {/* Loading state */}
+              {summaryLoading && (
+                <div style={{ textAlign: 'center', padding: '32px 0' }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: '50%',
+                    border: `3px solid rgba(${accentRgb},.12)`, borderTopColor: accent,
+                    animation: 'spin .8s linear infinite',
+                    margin: '0 auto 14px',
+                  }} />
+                  <p style={{ fontFamily: 'Outfit', fontSize: '.82rem', color: '#94a3b8', marginBottom: 4 }}>
+                    Analyzing {sessions.length} {sessions.length === 1 ? 'visit' : 'visits'}...
+                  </p>
+                  <p style={{ fontFamily: 'JetBrains Mono', fontSize: '.56rem', color: '#334155', letterSpacing: '.04em' }}>
+                    AI is reviewing all reports, symptoms, and medications
+                  </p>
+                </div>
+              )}
+
+              {/* Generated summary */}
+              {aiSummary && !summaryLoading && (
+                <div>
+                  {/* Header */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                      </svg>
+                      <span style={{ fontFamily: 'Outfit', fontWeight: 700, fontSize: '.82rem', color: '#e2e8f0' }}>
+                        AI-Generated {isHC ? 'Patient' : 'Client'} Summary
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => { setAiSummary(null); setSummaryError(null) }}
+                      style={{
+                        padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,.08)',
+                        background: 'rgba(255,255,255,.02)', color: '#64748b',
+                        fontFamily: 'JetBrains Mono', fontSize: '.52rem', cursor: 'pointer',
+                        transition: 'all .2s',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = `rgba(${accentRgb},.2)`; e.currentTarget.style.color = accent }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,.08)'; e.currentTarget.style.color = '#64748b' }}
+                    >
+                      â†» Regenerate
+                    </button>
+                  </div>
+
+                  {/* Summary content */}
+                  <div
+                    className="ai-summary-content"
+                    style={{
+                      padding: '18px 20px', borderRadius: 12,
+                      background: `linear-gradient(135deg, rgba(${accentRgb},.03), rgba(${accent2Rgb},.015))`,
+                      border: `1px solid rgba(${accentRgb},.08)`,
+                    }}
+                    dangerouslySetInnerHTML={{ __html: aiSummary }}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </StaticCard>
+    </div>
+  )
+}
+
 // â”€â”€â”€ Main Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export default function PersonLookupPage() {
   const router = useRouter()
@@ -3868,6 +4440,8 @@ export default function PersonLookupPage() {
   const [focusedField, setFocusedField] = useState<string | null>(null)
   const [sessionLoading, setSessionLoading] = useState(false)
   const [createLoading, setCreateLoading] = useState(false)
+  const [showSessionTypeModal, setShowSessionTypeModal] = useState(false)
+  const [selectedSessionMode, setSelectedSessionMode] = useState<string | null>(null)
 
   const isHC = domain === 'HEALTHCARE'
   const accent = isHC ? '#22d3ee' : '#34d399'
@@ -3902,16 +4476,24 @@ export default function PersonLookupPage() {
     finally { setCreateLoading(false) }
   }
 
-  const startSession = async () => {
+  const startSession = async (sessionMode: 'SINGLE' | 'MULTI') => {
+    setSelectedSessionMode(sessionMode)
     setSessionLoading(true)
     try {
       const res = await fetch('/api/session/create', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ personId: person.id, domain, language: 'ENGLISH' })
+        body: JSON.stringify({ personId: person.id, domain, language: 'ENGLISH', sessionMode })
       })
-      if (res.ok) { const s = await res.json(); router.push(`/session/${s.id}`) }
+      if (res.ok) {
+        const s = await res.json()
+        if (sessionMode === 'SINGLE') {
+          router.push(`/session/${s.id}/single`)
+        } else {
+          router.push(`/session/${s.id}`)
+        }
+      }
     } catch (e) { console.error(e) }
-    finally { setSessionLoading(false) }
+    finally { setSessionLoading(false); setShowSessionTypeModal(false); setSelectedSessionMode(null) }
   }
 
   const f = (field: string) => ({
@@ -3945,6 +4527,14 @@ export default function PersonLookupPage() {
         @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
         @keyframes slideRight{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
         @keyframes progressFill{from{width:0}to{width:var(--target-width)}}
+
+        /* AI Summary content styling */
+        .ai-summary-content h3{font-family:'Outfit',sans-serif;font-weight:700;font-size:.88rem;color:#e2e8f0;margin:18px 0 8px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,.04);}
+        .ai-summary-content h3:first-child{margin-top:0;}
+        .ai-summary-content p{font-family:'Outfit',sans-serif;font-size:.78rem;color:#94a3b8;line-height:1.65;margin:0 0 8px;}
+        .ai-summary-content ul{margin:4px 0 12px 16px;padding:0;}
+        .ai-summary-content li{font-family:'Outfit',sans-serif;font-size:.76rem;color:#94a3b8;line-height:1.6;margin-bottom:4px;}
+        .ai-summary-content strong{color:#e2e8f0;font-weight:700;}
 
         .pl-fade{animation:fadeSlide .5s cubic-bezier(.23,1,.32,1) both;}
         .pl-d1{animation-delay:.05s}.pl-d2{animation-delay:.12s}.pl-d3{animation-delay:.19s}.pl-d4{animation-delay:.26s}.pl-d5{animation-delay:.33s}
@@ -4062,19 +4652,19 @@ export default function PersonLookupPage() {
               {domain} Mode
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'JetBrains Mono', fontSize: '.57rem', color: '#334155', letterSpacing: '.07em' }}>
-              <span style={{ color: '#475569' }}>Domain</span>
+              <span style={{ color: '#475569' }}><LanguageCycler texts={['Domain', 'à²¡à³Šà²®à³‡à²¨à³']} interval={3500} /></span>
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#334155" strokeWidth="2"><polyline points="9 18 15 12 9 6" /></svg>
-              <span style={{ color: accent }}>Lookup</span>
+              <span style={{ color: accent }}><LanguageCycler texts={['Lookup', 'à²¹à³à²¡à³à²•à²¾à²Ÿ']} interval={3500} /></span>
             </div>
           </div>
 
           {/* Heading */}
           <h1 style={{ fontFamily: 'Outfit', fontWeight: 900, fontSize: 'clamp(1.9rem,3.2vw,2.6rem)', color: '#f8fafc', lineHeight: 1.07, letterSpacing: '-.026em', marginBottom: 10 }}>
-            {isHC ? 'Patient' : 'Client'}{' '}
-            <span style={{ background: `linear-gradient(135deg,${accent},${accent2})`, backgroundSize: '200% 200%', animation: 'gradShift 5s ease infinite', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Lookup</span>
+            <LanguageCycler texts={[isHC ? 'Patient' : 'Client', isHC ? 'à²°à³‹à²—à²¿' : 'à²—à³à²°à²¾à²¹à²•']} interval={3500} />{' '}
+            <span style={{ background: `linear-gradient(135deg,${accent},${accent2})`, backgroundSize: '200% 200%', animation: 'gradShift 5s ease infinite', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}><LanguageCycler texts={['Lookup', 'à²¹à³à²¡à³à²•à²¾à²Ÿ']} interval={3500} /></span>
           </h1>
           <p style={{ fontSize: '.9rem', lineHeight: 1.72, color: '#64748b', maxWidth: 460, marginBottom: 18 }}>
-            Search by mobile number to retrieve an existing {isHC ? 'patient' : 'client'} record, or register a new profile in seconds.
+            <LanguageCycler texts={[`Search by mobile number to retrieve an existing ${isHC ? 'patient' : 'client'} record, or register a new profile in seconds.`, `à²…à²¸à³à²¤à²¿à²¤à³à²µà²¦à²²à³à²²à²¿à²°à³à²µ ${isHC ? 'à²°à³‹à²—à²¿à²¯' : 'à²—à³à²°à²¾à²¹à²•à²¨'} à²¦à²¾à²–à²²à³†à²¯à²¨à³à²¨à³ à²¹à²¿à²‚à²ªà²¡à³†à²¯à²²à³ à²®à³Šà²¬à³ˆà²²à³ à²¸à²‚à²–à³à²¯à³†à²¯ à²®à³‚à²²à²• à²¹à³à²¡à³à²•à²¿, à²…à²¥à²µà²¾ à²¸à³†à²•à³†à²‚à²¡à³à²—à²³à²²à³à²²à²¿ à²¹à³Šà²¸ à²ªà³à²°à³Šà²«à³ˆà²²à³ à²…à²¨à³à²¨à³ à²¨à³‹à²‚à²¦à²¾à²¯à²¿à²¸à²¿.`]} interval={3500} />
           </p>
 
          
@@ -4084,15 +4674,15 @@ export default function PersonLookupPage() {
         {/* â•â• SEARCH CARD â•â• */}
         <div className="pl-fade pl-d2" style={{ marginBottom: 16 }}>
           <StaticCard accentRgb={accentRgb} accent2Rgb={accent2Rgb}>
-            <div style={{ padding: '30px 30px 28px' }}>npm run e
+            <div style={{ padding: '30px 30px 28px' }}>
 
               {/* Card header */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, position: 'relative', zIndex: 4 }}>
-                <span className="pl-sec-label" style={{ color: accent }}>Phone Search</span>
+                <span className="pl-sec-label" style={{ color: accent }}><LanguageCycler texts={['Phone Search', 'à²«à³‹à²¨à³ à²¹à³à²¡à³à²•à²¾à²Ÿ']} interval={3500} /></span>
                 <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg,rgba(${accentRgb},.13),transparent)` }} />
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 9px', borderRadius: 100, background: `rgba(${accentRgb},.04)`, border: `1px solid rgba(${accentRgb},.14)` }}>
                   <div style={{ width: 4, height: 4, borderRadius: '50%', background: accent, boxShadow: `0 0 5px ${accent}`, animation: 'blink 1.8s infinite' }} />
-                  <span style={{ fontFamily: 'JetBrains Mono', fontSize: '.54rem', color: accent, letterSpacing: '.07em', fontWeight: 600 }}>READY</span>
+                  <span style={{ fontFamily: 'JetBrains Mono', fontSize: '.54rem', color: accent, letterSpacing: '.07em', fontWeight: 600 }}><LanguageCycler texts={['READY', 'à²¸à²¿à²¦à³à²§à²µà²¾à²—à²¿à²¦à³†']} interval={3500} /></span>
                 </div>
               </div>
 
@@ -4100,7 +4690,7 @@ export default function PersonLookupPage() {
               <div className="pl-search-flex" style={{ display: 'flex', gap: 12, alignItems: 'flex-end', position: 'relative', zIndex: 4 }}>
                 <div style={{ flex: 1 }}>
                   <InputField
-                    label="Mobile Number" placeholder="10-digit number"
+                    label={<LanguageCycler texts={['Mobile Number', 'à²®à³Šà²¬à³ˆà²²à³ à²¸à²‚à²–à³à²¯à³†']} interval={3500} />} placeholder="10-à²…à²‚à²•à²¿à²¯ à²¸à²‚à²–à³à²¯à³†"
                     value={phone} onChange={v => setPhone(v.replace(/\D/g, ''))}
                     onKeyDown={e => e.key === 'Enter' && searchPerson()}
                     icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></svg>}
@@ -4109,9 +4699,9 @@ export default function PersonLookupPage() {
                 </div>
                 <button className="pl-btn-search" onClick={searchPerson} disabled={loading || phone.length < 10} style={{ marginBottom: 0 }}>
                   {loading ? (
-                    <><span style={{ width: 13, height: 13, border: `2px solid rgba(${accentRgb},.2)`, borderTopColor: accent, borderRadius: '50%', animation: 'spin .65s linear infinite', flexShrink: 0 }} />Searching</>
+                    <><span style={{ width: 13, height: 13, border: `2px solid rgba(${accentRgb},.2)`, borderTopColor: accent, borderRadius: '50%', animation: 'spin .65s linear infinite', flexShrink: 0 }} /><LanguageCycler texts={['Searching', 'à²¹à³à²¡à³à²•à³à²¤à³à²¤à²¿à²¦à³†']} interval={3500} /></>
                   ) : (
-                    <>Search <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg></>
+                    <><LanguageCycler texts={['Search', 'à²¹à³à²¡à³à²•à²¿']} interval={3500} /> <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg></>
                   )}
                 </button>
               </div>
@@ -4148,7 +4738,7 @@ export default function PersonLookupPage() {
 
                 {/* Section label */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, position: 'relative', zIndex: 4 }}>
-                  <span className="pl-sec-label" style={{ color: '#f59e0b' }}>New {isHC ? 'Patient' : 'Client'} Record</span>
+                  <span className="pl-sec-label" style={{ color: '#f59e0b' }}><LanguageCycler texts={[`New ${isHC ? 'Patient' : 'Client'} Record`, `à²¹à³Šà²¸ ${isHC ? 'à²°à³‹à²—à²¿' : 'à²—à³à²°à²¾à²¹à²•'} à²¦à²¾à²–à²²à³†`]} interval={3500} /></span>
                   <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg,rgba(245,158,11,.14),transparent)' }} />
                 </div>
 
@@ -4179,7 +4769,7 @@ export default function PersonLookupPage() {
                 <button className="pl-btn-amber" onClick={createPerson} disabled={!newPerson.name || createLoading} style={{ position: 'relative', zIndex: 4 }}>
                   {createLoading
                     ? <><span style={{ width: 13, height: 13, border: '2px solid rgba(245,158,11,.2)', borderTopColor: '#f59e0b', borderRadius: '50%', animation: 'spin .65s linear infinite', flexShrink: 0 }} />Creatingâ€¦</>
-                    : <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>Create {isHC ? 'Patient' : 'Client'} Record</>}
+                    : <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg><LanguageCycler texts={[`Create ${isHC ? 'Patient' : 'Client'} Record`, `${isHC ? 'à²°à³‹à²—à²¿' : 'à²—à³à²°à²¾à²¹à²•'} à²¦à²¾à²–à²²à³† à²°à²šà²¿à²¸à²¿`]} interval={3500} /></>}
                 </button>
               </div>
             </StaticCard>
@@ -4250,14 +4840,26 @@ export default function PersonLookupPage() {
 
                 {/* CTA button flush to bottom */}
                 <div style={{ padding: '0 30px 30px', position: 'relative', zIndex: 4 }}>
-                  <button className="pl-btn-cta" onClick={startSession} disabled={sessionLoading}>
-                    {sessionLoading
-                      ? <><span style={{ width: 15, height: 15, border: '2px solid rgba(0,0,0,.2)', borderTopColor: '#000', borderRadius: '50%', animation: 'spin .6s linear infinite', flexShrink: 0 }} />Launching Sessionâ€¦</>
-                      : <>Start New Session <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3" /></svg></>}
+                  <button className="pl-btn-cta" onClick={() => setShowSessionTypeModal(true)} disabled={sessionLoading}>
+                    <LanguageCycler texts={['Start New Session', 'à²¹à³Šà²¸ à²¸à³†à²·à²¨à³ à²ªà³à²°à²¾à²°à²‚à²­à²¿à²¸à²¿']} interval={3500} /> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3" /></svg>
                   </button>
                 </div>
               </StaticCard>
             </div>
+
+            {/* Health / Finance Timeline */}
+            {person.sessions?.length > 0 && (
+              <HealthTimeline
+                sessions={person.sessions}
+                accent={accent}
+                accentRgb={accentRgb}
+                accent2Rgb={accent2Rgb}
+                isHC={isHC}
+                router={router}
+                personName={person.name || 'Unknown'}
+                domain={domain || 'HEALTHCARE'}
+              />
+            )}
 
             {/* Session History */}
             {person.sessions?.length > 0 && (
@@ -4266,7 +4868,7 @@ export default function PersonLookupPage() {
                   <div style={{ padding: '28px 28px 24px', position: 'relative', zIndex: 4 }}>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
-                      <span className="pl-sec-label" style={{ color: accent }}>Session History</span>
+                      <span className="pl-sec-label" style={{ color: accent }}><LanguageCycler texts={['Session History', 'à²¸à³†à²·à²¨à³ à²‡à²¤à²¿à²¹à²¾à²¸']} interval={3500} /></span>
                       <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg,rgba(${accentRgb},.12),transparent)` }} />
                       <div style={{ padding: '3px 10px', borderRadius: 100, background: `rgba(${accentRgb},.05)`, border: `1px solid rgba(${accentRgb},.14)` }}>
                         <span style={{ fontFamily: 'JetBrains Mono', fontSize: '.56rem', color: accent, fontWeight: 700 }}>{person.sessions.length}</span>
@@ -4319,6 +4921,195 @@ export default function PersonLookupPage() {
           </>
         )}
       </div>
+
+      {/* â•â• SESSION TYPE MODAL â•â• */}
+      {showSessionTypeModal && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(0,0,0,.75)', backdropFilter: 'blur(12px)',
+          animation: 'fadeSlide .25s ease',
+        }} onClick={() => !sessionLoading && setShowSessionTypeModal(false)}>
+          <div onClick={e => e.stopPropagation()} style={{
+            width: '100%', maxWidth: 580, padding: '0 20px',
+            animation: 'fadeSlide .3s ease',
+          }}>
+            {/* Modal Card */}
+            <div style={{
+              background: 'linear-gradient(165deg, rgba(8,12,24,.98), rgba(3,6,15,.99))',
+              border: `1px solid rgba(${accentRgb},.12)`,
+              borderRadius: 24, overflow: 'hidden',
+              boxShadow: `0 40px 80px rgba(0,0,0,.7), 0 0 60px rgba(${accentRgb},.06)`,
+            }}>
+              {/* Top accent line */}
+              <div style={{
+                height: 2,
+                background: `linear-gradient(90deg, transparent, rgba(${accentRgb},.6), rgba(${accent2Rgb},.3), transparent)`,
+              }} />
+
+              {/* Header */}
+              <div style={{ padding: '28px 32px 0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                  <span className="pl-sec-label" style={{ color: accent }}>Session Type</span>
+                  <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg,rgba(${accentRgb},.13),transparent)` }} />
+                  <button onClick={() => setShowSessionTypeModal(false)} style={{
+                    width: 28, height: 28, borderRadius: 8,
+                    border: '1px solid rgba(255,255,255,.08)', background: 'rgba(255,255,255,.02)',
+                    color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', fontSize: 14, transition: 'all .2s',
+                  }}>
+                    Ã—
+                  </button>
+                </div>
+                <h2 style={{
+                  fontFamily: 'Outfit', fontWeight: 900, fontSize: '1.3rem',
+                  color: '#f8fafc', letterSpacing: '-.02em', marginBottom: 6,
+                }}>
+                  Choose Session Mode
+                </h2>
+                <p style={{ fontSize: '.82rem', color: '#64748b', lineHeight: 1.6, marginBottom: 24 }}>
+                  Select how you'd like to conduct this consultation session.
+                </p>
+              </div>
+
+              {/* Options */}
+              <div style={{ padding: '0 32px 28px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+                {/* â”€â”€ Single Language Option â”€â”€ */}
+                <button
+                  disabled={sessionLoading}
+                  onClick={() => startSession('SINGLE')}
+                  style={{
+                    width: '100%', padding: '20px 22px', borderRadius: 16,
+                    background: selectedSessionMode === 'SINGLE'
+                      ? `linear-gradient(135deg, rgba(${accentRgb},.12), rgba(${accentRgb},.04))`
+                      : 'rgba(255,255,255,.018)',
+                    border: selectedSessionMode === 'SINGLE'
+                      ? `1px solid rgba(${accentRgb},.3)`
+                      : '1px solid rgba(255,255,255,.06)',
+                    cursor: sessionLoading ? 'not-allowed' : 'pointer',
+                    textAlign: 'left', transition: 'all .25s',
+                    opacity: sessionLoading && selectedSessionMode !== 'SINGLE' ? 0.4 : 1,
+                  }}
+                  onMouseEnter={e => { if (!sessionLoading) { e.currentTarget.style.borderColor = `rgba(${accentRgb},.22)`; e.currentTarget.style.background = `rgba(${accentRgb},.035)` }}}
+                  onMouseLeave={e => { if (!sessionLoading && selectedSessionMode !== 'SINGLE') { e.currentTarget.style.borderColor = 'rgba(255,255,255,.06)'; e.currentTarget.style.background = 'rgba(255,255,255,.018)' }}}
+                >
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+                    <div style={{
+                      width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+                      background: `linear-gradient(135deg, rgba(${accentRgb},.12), rgba(${accentRgb},.04))`,
+                      border: `1px solid rgba(${accentRgb},.2)`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      {sessionLoading && selectedSessionMode === 'SINGLE' ? (
+                        <span style={{ width: 18, height: 18, border: `2px solid rgba(${accentRgb},.2)`, borderTopColor: accent, borderRadius: '50%', animation: 'spin .6s linear infinite', display: 'block' }} />
+                      ) : (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                          <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                          <line x1="12" y1="19" x2="12" y2="23" />
+                          <line x1="8" y1="23" x2="16" y2="23" />
+                        </svg>
+                      )}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                        <span style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '.95rem', color: '#f8fafc' }}>
+                          Single Language Session
+                        </span>
+                        <span style={{
+                          padding: '2px 8px', borderRadius: 100,
+                          background: `rgba(${accentRgb},.06)`, border: `1px solid rgba(${accentRgb},.16)`,
+                          fontFamily: 'JetBrains Mono', fontSize: '.52rem', fontWeight: 600,
+                          color: accent, letterSpacing: '.06em',
+                        }}>NEW</span>
+                      </div>
+                      <p style={{ fontSize: '.76rem', color: '#64748b', lineHeight: 1.55, marginBottom: 10 }}>
+                        One continuous recording with auto language detection. NER entity extraction, medical report generation, and full editable transcript at the end.
+                      </p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        {['Auto-detect', 'Single mic', 'Editable transcript', 'Translate'].map(tag => (
+                          <span key={tag} style={{
+                            padding: '3px 9px', borderRadius: 6,
+                            background: `rgba(${accentRgb},.04)`, border: `1px solid rgba(${accentRgb},.1)`,
+                            fontFamily: 'JetBrains Mono', fontSize: '.55rem', color: accent, fontWeight: 500,
+                          }}>{tag}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </button>
+
+                {/* â”€â”€ Multi-Language Option â”€â”€ */}
+                <button
+                  disabled={sessionLoading}
+                  onClick={() => startSession('MULTI')}
+                  style={{
+                    width: '100%', padding: '20px 22px', borderRadius: 16,
+                    background: selectedSessionMode === 'MULTI'
+                      ? `linear-gradient(135deg, rgba(${accent2Rgb},.12), rgba(${accent2Rgb},.04))`
+                      : 'rgba(255,255,255,.018)',
+                    border: selectedSessionMode === 'MULTI'
+                      ? `1px solid rgba(${accent2Rgb},.3)`
+                      : '1px solid rgba(255,255,255,.06)',
+                    cursor: sessionLoading ? 'not-allowed' : 'pointer',
+                    textAlign: 'left', transition: 'all .25s',
+                    opacity: sessionLoading && selectedSessionMode !== 'MULTI' ? 0.4 : 1,
+                  }}
+                  onMouseEnter={e => { if (!sessionLoading) { e.currentTarget.style.borderColor = `rgba(${accent2Rgb},.22)`; e.currentTarget.style.background = `rgba(${accent2Rgb},.035)` }}}
+                  onMouseLeave={e => { if (!sessionLoading && selectedSessionMode !== 'MULTI') { e.currentTarget.style.borderColor = 'rgba(255,255,255,.06)'; e.currentTarget.style.background = 'rgba(255,255,255,.018)' }}}
+                >
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+                    <div style={{
+                      width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+                      background: `linear-gradient(135deg, rgba(${accent2Rgb},.12), rgba(${accent2Rgb},.04))`,
+                      border: `1px solid rgba(${accent2Rgb},.2)`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      {sessionLoading && selectedSessionMode === 'MULTI' ? (
+                        <span style={{ width: 18, height: 18, border: `2px solid rgba(${accent2Rgb},.2)`, borderTopColor: accent2, borderRadius: '50%', animation: 'spin .6s linear infinite', display: 'block' }} />
+                      ) : (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={accent2} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                          <circle cx="9" cy="7" r="4" />
+                          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                      )}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                        <span style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '.95rem', color: '#f8fafc' }}>
+                          Multi-Language Session
+                        </span>
+                      </div>
+                      <p style={{ fontSize: '.76rem', color: '#64748b', lineHeight: 1.55, marginBottom: 10 }}>
+                        Doctor and patient speak in different languages. Separate recording channels with real-time translation across all languages.
+                      </p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        {['Doctor + Patient mics', '3 languages', 'Live translate', 'Cross-lingual'].map(tag => (
+                          <span key={tag} style={{
+                            padding: '3px 9px', borderRadius: 6,
+                            background: `rgba(${accent2Rgb},.04)`, border: `1px solid rgba(${accent2Rgb},.1)`,
+                            fontFamily: 'JetBrains Mono', fontSize: '.55rem', color: accent2, fontWeight: 500,
+                          }}>{tag}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </button>
+
+              </div>
+
+              {/* Bottom accent */}
+              <div style={{
+                height: 2,
+                background: `linear-gradient(90deg, transparent 5%, rgba(${accentRgb},.25) 30%, rgba(${accent2Rgb},.15) 70%, transparent 95%)`,
+              }} />
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
@@ -4341,6 +5132,7 @@ import {
 } from 'lucide-react'
 import { useSessionPolling } from '@/lib/hooks/useSessionPolling'
 import { generatePDFClient } from '@/lib/pdf/client-generator'
+
 
 // â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface Message {
@@ -5829,6 +6621,8 @@ export default function SessionPage() {
                 {isPatientRecording ? 'â— REC â€“ click to stop' : `${isPatientLabel} speaks here`}
               </p>
             </div>
+
+
 
             {/* Live Extraction */}
             <div className="dark-card-elevated p-4">
@@ -10972,7 +11766,7 @@ Return ONLY valid JSON matching the schema. Use null for missing values.`
 // app/api/ai/extract-entities/route.ts
 
 import { NextRequest, NextResponse } from 'next/server'
-import { extractMedicalEntitiesHF } from '@/lib/huggingface/ner'
+import { extractMedicalEntitiesHF, hasSubwordFragments } from '@/lib/huggingface/ner'
 import { extractMedicalEntities as extractWithGroq } from '@/lib/ner/medical-ner'
 import { extractFinanceEntities } from '@/lib/ner/finance-ner'
 
@@ -10987,20 +11781,26 @@ export async function POST(req: NextRequest) {
     let entities
 
     if (domain === 'FINANCE') {
-      // â”€â”€ Finance domain: always use Groq â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       console.log('Extracting finance entities with Groq...')
       entities = await extractFinanceEntities(text)
 
     } else {
-      // â”€â”€ Healthcare domain â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // â”€â”€ Healthcare: HuggingFace first, Groq as fallback â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       if (useHuggingFace && process.env.HUGGINGFACE_API_KEY) {
         console.log('Using Hugging Face NER for healthcare...')
         entities = await extractMedicalEntitiesHF(text)
 
-        const hasEntities = Object.values(entities).some((arr: any) => arr.length > 0)
-        if (!hasEntities) {
-          console.log('HF returned empty, falling back to Groq...')
+        const isEmpty = Object.values(entities).every((arr: any) => arr.length === 0)
+        const hasFragments = hasSubwordFragments(entities)
+
+        if (isEmpty || hasFragments) {
+          console.log(
+            isEmpty ? 'HF returned empty' : 'HF returned subword fragments',
+            'â€” falling back to Groq...'
+          )
           entities = await extractWithGroq(text)
+        } else {
+          console.log('HF extraction successful, skipping Groq.')
         }
       } else {
         console.log('Using Groq NER for healthcare...')
@@ -11025,7 +11825,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { groq, MODELS } from '@/lib/groq'
 import { extractMedicalEntities } from '@/lib/ner/medical-ner'
 
-// Section color map for clinical assessment subheadings
 const SECTION_COLORS: Record<string, { dark: string; light: string; icon: string }> = {
   'Differential Diagnosis':     { dark: '#60A5FA', light: '#1d4ed8', icon: 'âŠ•' },
   'Most Likely Diagnosis':      { dark: '#34D399', light: '#065f46', icon: 'âœ“' },
@@ -11033,6 +11832,26 @@ const SECTION_COLORS: Record<string, { dark: string; light: string; icon: string
   'Treatment Plan':             { dark: '#F472B6', light: '#9d174d', icon: 'ðŸ’Š' },
   'Follow-up Recommendations':  { dark: '#A78BFA', light: '#4c1d95', icon: 'ðŸ“…' },
   'Red Flags':                  { dark: '#F87171', light: '#991b1b', icon: 'âš ' },
+}
+
+// Translated section names for healthcare reports
+const SECTION_TRANSLATIONS: Record<string, Record<string, string>> = {
+  'Differential Diagnosis':     { KANNADA: 'à²µà²¿à²­à³‡à²¦à²¾à²¤à³à²®à²• à²°à³‹à²—à²¨à²¿à²°à³à²£à²¯',    HINDI: 'à¤µà¤¿à¤­à¥‡à¤¦à¤• à¤¨à¤¿à¤¦à¤¾à¤¨' },
+  'Most Likely Diagnosis':      { KANNADA: 'à²…à²¤à³à²¯à²‚à²¤ à²¸à²‚à²­à²¾à²µà³à²¯ à²°à³‹à²—à²¨à²¿à²°à³à²£à²¯', HINDI: 'à¤¸à¤¬à¤¸à¥‡ à¤¸à¤‚à¤­à¤¾à¤µà¤¿à¤¤ à¤¨à¤¿à¤¦à¤¾à¤¨' },
+  'Recommended Investigations': { KANNADA: 'à²¶à²¿à²«à²¾à²°à²¸à³ à²®à²¾à²¡à²¿à²¦ à²¤à²¨à²¿à²–à³†à²—à²³à³',  HINDI: 'à¤…à¤¨à¥à¤¶à¤‚à¤¸à¤¿à¤¤ à¤œà¤¾à¤à¤šà¥‡à¤‚' },
+  'Treatment Plan':             { KANNADA: 'à²šà²¿à²•à²¿à²¤à³à²¸à²¾ à²¯à³‹à²œà²¨à³†',           HINDI: 'à¤‰à¤ªà¤šà¤¾à¤° à¤¯à¥‹à¤œà¤¨à¤¾' },
+  'Follow-up Recommendations':  { KANNADA: 'à²…à²¨à³à²¸à²°à²£à²¾ à²¶à²¿à²«à²¾à²°à²¸à³à²—à²³à³',      HINDI: 'à¤…à¤¨à¥à¤µà¤°à¥à¤¤à¥€ à¤¸à¤¿à¤«à¤¾à¤°à¤¿à¤¶à¥‡à¤‚' },
+  'Red Flags':                  { KANNADA: 'à²Žà²šà³à²šà²°à²¿à²•à³† à²¸à²‚à²•à³‡à²¤à²—à²³à³',        HINDI: 'à¤–à¤¤à¤°à¥‡ à¤•à¥‡ à¤¸à¤‚à¤•à¥‡à¤¤' },
+}
+
+// Translated section names for finance reports
+const FIN_SECTION_TRANSLATIONS: Record<string, Record<string, string>> = {
+  'Financial Health Assessment':      { KANNADA: 'à²†à²°à³à²¥à²¿à²• à²†à²°à³‹à²—à³à²¯ à²®à³Œà²²à³à²¯à²®à²¾à²ªà²¨',       HINDI: 'à¤µà¤¿à¤¤à¥à¤¤à¥€à¤¯ à¤¸à¥à¤µà¤¾à¤¸à¥à¤¥à¥à¤¯ à¤®à¥‚à¤²à¥à¤¯à¤¾à¤‚à¤•à¤¨' },
+  'Investment Strategy':              { KANNADA: 'à²¹à³‚à²¡à²¿à²•à³† à²¤à²‚à²¤à³à²°',                    HINDI: 'à¤¨à¤¿à¤µà¥‡à¤¶ à¤°à¤£à¤¨à¥€à¤¤à¤¿' },
+  'Risk Analysis':                    { KANNADA: 'à²°à²¿à²¸à³à²•à³ à²µà²¿à²¶à³à²²à³‡à²·à²£à³†',                HINDI: 'à¤œà¥‹à¤–à¤¿à¤® à¤µà¤¿à¤¶à¥à¤²à¥‡à¤·à¤£' },
+  'Tax Planning Strategy':            { KANNADA: 'à²¤à³†à²°à²¿à²—à³† à²¯à³‹à²œà²¨à²¾ à²¤à²‚à²¤à³à²°',              HINDI: 'à¤•à¤° à¤¨à¤¿à¤¯à¥‹à¤œà¤¨ à¤°à¤£à¤¨à¥€à¤¤à¤¿' },
+  'Debt Management Plan':             { KANNADA: 'à²¸à²¾à²² à²¨à²¿à²°à³à²µà²¹à²£à³† à²¯à³‹à²œà²¨à³†',              HINDI: 'à¤‹à¤£ à¤ªà¥à¤°à¤¬à¤‚à¤§à¤¨ à¤¯à¥‹à¤œà¤¨à¤¾' },
+  'Retirement & Long-term Planning':  { KANNADA: 'à²¨à²¿à²µà³ƒà²¤à³à²¤à²¿ à²®à²¤à³à²¤à³ à²¦à³€à²°à³à²˜à²¾à²µà²§à²¿ à²¯à³‹à²œà²¨à³†', HINDI: 'à¤¸à¥‡à¤µà¤¾à¤¨à¤¿à¤µà¥ƒà¤¤à¥à¤¤à¤¿ à¤”à¤° à¤¦à¥€à¤°à¥à¤˜à¤•à¤¾à¤²à¤¿à¤• à¤¯à¥‹à¤œà¤¨à¤¾' },
 }
 
 export async function POST(req: NextRequest) {
@@ -11044,7 +11863,8 @@ export async function POST(req: NextRequest) {
       domain,
       department,
       template,
-      personName
+      personName,
+      language = 'ENGLISH',
     } = await req.json()
 
     if (!transcript || !domain || !department) {
@@ -11053,6 +11873,23 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       )
     }
+
+    const langInstruction =
+      language === 'KANNADA'
+        ? `CRITICAL LANGUAGE RULE: You MUST write ALL paragraph text (<p>), ALL list items (<li>), and ALL explanations in Kannada (à²•à²¨à³à²¨à²¡) language ONLY.
+- Every <p> tag content MUST be in Kannada.
+- Every <li> tag content MUST be in Kannada.
+- Do NOT write any English text inside <p> or <li> tags.
+- Medical terms like drug names can remain in English, but all explanations must be Kannada.
+- Section heading names inside <h3> tags MUST stay in English (for technical reasons).`
+        : language === 'HINDI'
+        ? `CRITICAL LANGUAGE RULE: You MUST write ALL paragraph text (<p>), ALL list items (<li>), and ALL explanations in Hindi (à¤¹à¤¿à¤‚à¤¦à¥€) language ONLY.
+- Every <p> tag content MUST be in Hindi.
+- Every <li> tag content MUST be in Hindi.
+- Do NOT write any English text inside <p> or <li> tags.
+- Medical terms like drug names can remain in English, but all explanations must be Hindi.
+- Section heading names inside <h3> tags MUST stay in English (for technical reasons).`
+        : 'Write ALL text content in English.'
 
     let finalReport = ''
 
@@ -11063,8 +11900,9 @@ export async function POST(req: NextRequest) {
           entities = await extractMedicalEntities(transcript)
         }
 
-        // Structured clinical data extraction
+        const targetLangName = language === 'KANNADA' ? 'Kannada (à²•à²¨à³à²¨à²¡)' : language === 'HINDI' ? 'Hindi (à¤¹à¤¿à¤‚à¤¦à¥€)' : 'English'
         const structuredPrompt = `Analyze this clinical consultation and extract structured information.
+${language !== 'ENGLISH' ? `CRITICAL: Write ALL string values in ${targetLangName}. The chiefComplaint, historyOfPresentIllness, pastMedicalHistory, allergies, familyHistory, physicalExamination fields MUST be written in ${targetLangName}. Medication names can stay in English.` : ''}
 CRITICAL:
 - Only extract what was EXPLICITLY mentioned
 - If denied (e.g. "no vomiting"), do NOT include it
@@ -11078,8 +11916,8 @@ ${JSON.stringify(entities, null, 2)}
 
 Return JSON only:
 {
-  "chiefComplaint": "primary complaint as stated",
-  "historyOfPresentIllness": "symptom history in 1-2 sentences",
+  "chiefComplaint": "primary complaint as stated${language !== 'ENGLISH' ? ` â€” write in ${targetLangName}` : ''}",
+  "historyOfPresentIllness": "symptom history in 1-2 sentences${language !== 'ENGLISH' ? ` â€” write in ${targetLangName}` : ''}",
   "pastMedicalHistory": "if mentioned, else null",
   "currentMedications": ["only explicitly mentioned medications"],
   "allergies": "if mentioned, else null",
@@ -11109,7 +11947,6 @@ Return JSON only:
           sd = { chiefComplaint: 'See consultation notes', historyOfPresentIllness: transcript.substring(0, 200) }
         }
 
-        // Clinical assessment â€” request clean HTML with exact section names
         const assessmentPrompt = `You are an experienced ${department.replace(/_/g, ' ')} physician.
 Write a clinical assessment based ONLY on what was discussed.
 
@@ -11122,7 +11959,7 @@ Conversation:
 ${transcript}
 
 Write clean HTML only. No markdown. No backticks.
-Use EXACTLY these section names in <h3> tags (spelling must match exactly):
+Use EXACTLY these ENGLISH section names in <h3> tags (spelling must match exactly, DO NOT translate these heading names):
 - Differential Diagnosis
 - Most Likely Diagnosis
 - Recommended Investigations
@@ -11131,9 +11968,20 @@ Use EXACTLY these section names in <h3> tags (spelling must match exactly):
 - Red Flags
 
 Format each section as:
-<h3>Section Name</h3>
-<p>explanation...</p>
-<ul><li>item</li></ul>
+<h3>Section Name In English</h3>
+<p>explanation text here</p>
+<ul><li>item here</li></ul>
+
+${language !== 'ENGLISH' ? `ABSOLUTE REQUIREMENT â€” LANGUAGE:
+The <h3> section headings MUST remain in English exactly as listed above.
+But ALL other text â€” every <p> paragraph, every <li> list item, every explanation â€” MUST be written in ${targetLangName}.
+Do NOT write English in <p> or <li> tags. Only ${targetLangName} is allowed there.
+Medical/drug names (like "Paracetamol") may stay in English, but wrap them in a ${targetLangName} sentence.
+
+Example for Kannada:
+<h3>Treatment Plan</h3>
+<p>à²°à³‹à²—à²¿à²—à³† Paracetamol 500mg à²”à²·à²§à²¿à²¯à²¨à³à²¨à³ à²¶à²¿à²«à²¾à²°à²¸à³ à²®à²¾à²¡à²²à²¾à²—à²¿à²¦à³†.</p>
+<ul><li>Paracetamol 500mg - à²¦à²¿à²¨à²•à³à²•à³† à²®à³‚à²°à³ à²¬à²¾à²°à²¿</li></ul>` : ''}
 
 Important: Base ONLY on confirmed symptoms. Do not include denied symptoms.`
 
@@ -11147,12 +11995,12 @@ Important: Base ONLY on confirmed symptoms. Do not include denied symptoms.`
         let assessmentHtml = assessmentResponse.choices[0].message.content!
           .replace(/```html/gi, '').replace(/```/g, '').trim()
 
-        // Inject colored subheadings by replacing <h3>Section Name</h3>
-        // with a styled version that has data-section attribute
+        // Match English section names and replace with translated names (keep data-section in English for CSS)
         Object.entries(SECTION_COLORS).forEach(([name, colors]) => {
           const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
           const regex = new RegExp(`<h3>\\s*${escaped}\\s*</h3>`, 'gi')
-          assessmentHtml = assessmentHtml.replace(regex, `<h3 data-section="${name}">${name}</h3>`)
+          const displayName = (language !== 'ENGLISH' && SECTION_TRANSLATIONS[name]?.[language]) || name
+          assessmentHtml = assessmentHtml.replace(regex, `<h3 data-section="${name}">${displayName}</h3>`)
         })
 
         const date = new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })
@@ -11161,7 +12009,6 @@ Important: Base ONLY on confirmed symptoms. Do not include denied symptoms.`
           ? (sd.currentMedications.join(', ') || 'None')
           : (sd.currentMedications || 'None')
 
-        // Build vitals row if any are available
         const vitalsEntries = [
           sd.vitals?.bp    && `BP: ${sd.vitals.bp}`,
           sd.vitals?.pulse && `Pulse: ${sd.vitals.pulse}`,
@@ -11170,104 +12017,103 @@ Important: Base ONLY on confirmed symptoms. Do not include denied symptoms.`
           sd.vitals?.rr    && `RR: ${sd.vitals.rr}`,
         ].filter(Boolean).join('  |  ')
 
+        const reportTitle =
+          language === 'KANNADA' ? 'à²µà³ˆà²¦à³à²¯à²•à³€à²¯ à²¸à²®à²¾à²²à³‹à²šà²¨à²¾ à²µà²°à²¦à²¿' :
+          language === 'HINDI'   ? 'à¤šà¤¿à¤•à¤¿à¤¤à¥à¤¸à¤¾ à¤ªà¤°à¤¾à¤®à¤°à¥à¤¶ à¤°à¤¿à¤ªà¥‹à¤°à¥à¤Ÿ' :
+          'MEDICAL CONSULTATION REPORT'
+
+        const labelName       = language === 'KANNADA' ? 'à²¹à³†à²¸à²°à³'       : language === 'HINDI' ? 'à¤¨à¤¾à¤®'         : 'Name'
+        const labelDate       = language === 'KANNADA' ? 'à²¦à²¿à²¨à²¾à²‚à²•'      : language === 'HINDI' ? 'à¤¤à¤¾à¤°à¥€à¤–'       : 'Date'
+        const labelDept       = language === 'KANNADA' ? 'à²µà²¿à²­à²¾à²—'       : language === 'HINDI' ? 'à¤µà¤¿à¤­à¤¾à¤—'       : 'Department'
+        const labelMeds       = language === 'KANNADA' ? 'à²”à²·à²§à²—à²³à³'     : language === 'HINDI' ? 'à¤¦à¤µà¤¾à¤‡à¤¯à¤¾à¤'     : 'Medications'
+        const labelAllergies  = language === 'KANNADA' ? 'à²…à²²à²°à³à²œà²¿à²—à²³à³'  : language === 'HINDI' ? 'à¤à¤²à¤°à¥à¤œà¥€'      : 'Allergies'
+        const labelVitals     = language === 'KANNADA' ? 'à²ªà³à²°à²®à³à²–à²¾à²‚à²¶à²—à²³à³': language === 'HINDI' ? 'à¤®à¤¹à¤¤à¥à¤µà¤ªà¥‚à¤°à¥à¤£' : 'Vitals'
+        const labelPatient    = language === 'KANNADA' ? 'à²°à³‹à²—à²¿à²¯ à²®à²¾à²¹à²¿à²¤à²¿': language === 'HINDI' ? 'à¤°à¥‹à¤—à¥€ à¤œà¤¾à¤¨à¤•à¤¾à¤°à¥€': 'Patient Information'
+        const labelComplaint  = language === 'KANNADA' ? 'à²®à³à²–à³à²¯ à²¦à³‚à²°à³'  : language === 'HINDI' ? 'à¤®à¥à¤–à¥à¤¯ à¤¶à¤¿à¤•à¤¾à¤¯à¤¤': 'Chief Complaint'
+        const labelHistory    = language === 'KANNADA' ? 'à²µà²°à³à²¤à²®à²¾à²¨ à²•à²¾à²¯à²¿à²²à³†à²¯ à²‡à²¤à²¿à²¹à²¾à²¸' : language === 'HINDI' ? 'à¤µà¤°à¥à¤¤à¤®à¤¾à¤¨ à¤¬à¥€à¤®à¤¾à¤°à¥€ à¤•à¤¾ à¤‡à¤¤à¤¿à¤¹à¤¾à¤¸' : 'History of Present Illness'
+        const labelPastHist   = language === 'KANNADA' ? 'à²¹à²¿à²‚à²¦à²¿à²¨ à²µà³ˆà²¦à³à²¯à²•à³€à²¯ à²‡à²¤à²¿à²¹à²¾à²¸' : language === 'HINDI' ? 'à¤ªà¤¿à¤›à¤²à¤¾ à¤šà¤¿à¤•à¤¿à¤¤à¥à¤¸à¤¾ à¤‡à¤¤à¤¿à¤¹à¤¾à¤¸' : 'Past Medical History'
+        const labelAssessment = language === 'KANNADA' ? 'à²•à³à²²à²¿à²¨à²¿à²•à²²à³ à²®à³Œà²²à³à²¯à²®à²¾à²ªà²¨ à²®à²¤à³à²¤à³ à²¯à³‹à²œà²¨à³†' : language === 'HINDI' ? 'à¤¨à¥ˆà¤¦à¤¾à¤¨à¤¿à¤• à¤®à¥‚à¤²à¥à¤¯à¤¾à¤‚à¤•à¤¨ à¤”à¤° à¤¯à¥‹à¤œà¤¨à¤¾' : 'Clinical Assessment & Plan'
+        const labelConfidential = language === 'KANNADA' ? 'à²—à³Œà²ªà³à²¯' : language === 'HINDI' ? 'à¤—à¥‹à¤ªà¤¨à¥€à¤¯' : 'Confidential'
+        const labelGenerated  = language === 'KANNADA' ? 'à²µà²¾à²¯à³à²¸à³ à²‡à²‚à²Ÿà³†à²²à²¿à²œà³†à²¨à³à²¸à³ à²¸à²¿à²¸à³à²Ÿà²®à³ à²®à³‚à²²à²• à²°à²šà²¿à²¸à²²à²¾à²—à²¿à²¦à³†' : language === 'HINDI' ? 'à¤µà¥‰à¤¯à¤¸ à¤‡à¤‚à¤Ÿà¥‡à¤²à¤¿à¤œà¥‡à¤‚à¤¸ à¤¸à¤¿à¤¸à¥à¤Ÿà¤® à¤¦à¥à¤µà¤¾à¤°à¤¾ à¤‰à¤¤à¥à¤ªà¤¨à¥à¤¨' : 'Generated by Voice Intelligence System'
+
         finalReport = `
 <div class="rpt-wrap">
-
   <div class="rpt-header">
-    <h1 class="rpt-title">MEDICAL CONSULTATION REPORT</h1>
-    <p class="rpt-subtitle">Confidential &nbsp;â€¢&nbsp; ${deptName} Department</p>
+    <h1 class="rpt-title">${reportTitle}</h1>
+    <p class="rpt-subtitle">${labelConfidential} &nbsp;â€¢&nbsp; ${deptName}</p>
   </div>
 
   <div class="rpt-info-box">
-    <h2 class="rpt-section-title rpt-section-title--blue">Patient Information</h2>
+    <h2 class="rpt-section-title rpt-section-title--blue">${labelPatient}</h2>
     <table class="rpt-table">
       <tr>
-        <td class="rpt-td-label">Name</td>
+        <td class="rpt-td-label">${labelName}</td>
         <td class="rpt-td-value">${personName || 'Unknown'}</td>
-        <td class="rpt-td-label">Date</td>
+        <td class="rpt-td-label">${labelDate}</td>
         <td class="rpt-td-value">${date}</td>
       </tr>
       <tr>
-        <td class="rpt-td-label">Department</td>
+        <td class="rpt-td-label">${labelDept}</td>
         <td class="rpt-td-value">${deptName}</td>
-        <td class="rpt-td-label">Medications</td>
+        <td class="rpt-td-label">${labelMeds}</td>
         <td class="rpt-td-value">${medications}</td>
       </tr>
       ${sd.allergies ? `<tr>
-        <td class="rpt-td-label">Allergies</td>
+        <td class="rpt-td-label">${labelAllergies}</td>
         <td class="rpt-td-value" colspan="3">${sd.allergies}</td>
       </tr>` : ''}
       ${vitalsEntries ? `<tr>
-        <td class="rpt-td-label">Vitals</td>
+        <td class="rpt-td-label">${labelVitals}</td>
         <td class="rpt-td-value" colspan="3">${vitalsEntries}</td>
       </tr>` : ''}
     </table>
   </div>
 
   <div class="rpt-section">
-    <h2 class="rpt-section-title rpt-section-title--blue">Chief Complaint</h2>
+    <h2 class="rpt-section-title rpt-section-title--blue">${labelComplaint}</h2>
     <p class="rpt-body">${sd.chiefComplaint || 'Not specified'}</p>
   </div>
 
   <div class="rpt-section">
-    <h2 class="rpt-section-title rpt-section-title--blue">History of Present Illness</h2>
+    <h2 class="rpt-section-title rpt-section-title--blue">${labelHistory}</h2>
     <p class="rpt-body">${sd.historyOfPresentIllness || 'Not documented'}</p>
   </div>
 
   ${sd.pastMedicalHistory ? `<div class="rpt-section">
-    <h2 class="rpt-section-title rpt-section-title--blue">Past Medical History</h2>
+    <h2 class="rpt-section-title rpt-section-title--blue">${labelPastHist}</h2>
     <p class="rpt-body">${sd.pastMedicalHistory}</p>
   </div>` : ''}
 
   <div class="rpt-section rpt-assessment">
-    <h2 class="rpt-section-title rpt-section-title--green">Clinical Assessment &amp; Plan</h2>
+    <h2 class="rpt-section-title rpt-section-title--green">${labelAssessment}</h2>
     <div class="rpt-assessment-body">${assessmentHtml}</div>
   </div>
 
   <div class="rpt-footer">
-    Generated by Voice Intelligence System &nbsp;|&nbsp; ${date}
+    ${labelGenerated} &nbsp;|&nbsp; ${date}
   </div>
-
 </div>
 
 <style>
-/* â”€â”€â”€ Base structure â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .rpt-wrap { font-family: Georgia, 'Times New Roman', serif; max-width: 780px; }
 .rpt-header { text-align: center; border-bottom: 2px solid; padding-bottom: 12px; margin-bottom: 20px; }
 .rpt-title { font-size: 1.35rem; font-weight: 700; letter-spacing: 0.05em; margin: 0 0 4px 0; }
 .rpt-subtitle { font-size: 0.78rem; margin: 0; opacity: 0.55; }
-
 .rpt-info-box { border-radius: 6px; padding: 12px; margin-bottom: 16px; border: 1px solid; }
 .rpt-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
 .rpt-td-label { font-weight: 700; padding: 5px 8px; width: 18%; opacity: 0.65; }
 .rpt-td-value { padding: 5px 8px; }
-
 .rpt-section { margin-bottom: 14px; }
-.rpt-section-title {
-  font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em;
-  text-transform: uppercase; padding-left: 10px;
-  margin: 0 0 7px 0; border-left: 3px solid;
-}
+.rpt-section-title { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding-left: 10px; margin: 0 0 7px 0; border-left: 3px solid; }
 .rpt-body { font-size: 0.875rem; line-height: 1.75; margin: 0; }
-
-/* Assessment subheading base */
-.rpt-assessment-body h3 {
-  font-size: 0.88rem;
-  font-weight: 700;
-  margin: 16px 0 5px 0;
-  padding: 5px 10px 5px 12px;
-  border-radius: 4px;
-  border-left: 3px solid;
-  display: block;
-}
+.rpt-assessment-body h3 { font-size: 0.88rem; font-weight: 700; margin: 16px 0 5px 0; padding: 5px 10px 5px 12px; border-radius: 4px; border-left: 3px solid; display: block; }
 .rpt-assessment-body p  { font-size: 0.875rem; line-height: 1.75; margin: 0 0 6px 0; }
 .rpt-assessment-body ul, .rpt-assessment-body ol { font-size: 0.875rem; padding-left: 20px; margin: 4px 0 8px; }
 .rpt-assessment-body li { margin-bottom: 4px; line-height: 1.65; }
 .rpt-assessment-body strong { font-weight: 700; }
-
 .rpt-footer { font-size: 0.72rem; text-align: center; margin-top: 24px; padding-top: 8px; border-top: 1px solid; opacity: 0.45; }
 
-/* â”€â”€â”€ DARK theme (inside #report-content) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* Dark */
 #report-content .rpt-wrap { color: #CCC; }
 #report-content .rpt-header { border-color: #2A2A2A; }
 #report-content .rpt-title { color: #E8E8E8; }
@@ -11275,18 +12121,14 @@ Important: Base ONLY on confirmed symptoms. Do not include denied symptoms.`
 #report-content .rpt-table td { border-color: #1A2A3A; }
 #report-content .rpt-td-label { color: #6B8FAF; }
 #report-content .rpt-td-value { color: #CCC; }
-#report-content .rpt-section-title--blue { color: #60A5FA; border-color: #3b82f6; }
+#report-content .rpt-section-title--blue  { color: #60A5FA; border-color: #3b82f6; }
 #report-content .rpt-section-title--green { color: #34D399; border-color: #10b981; }
 #report-content .rpt-body { color: #BBB; }
 #report-content .rpt-footer { border-color: #2A2A2A; color: #555; }
-
-/* Assessment body dark */
 #report-content .rpt-assessment-body { color: #BBB; }
 #report-content .rpt-assessment-body p { color: #BBB; }
 #report-content .rpt-assessment-body li { color: #BBB; }
 #report-content .rpt-assessment-body strong { color: #E8E8E8; }
-
-/* Colored subheadings â€” DARK */
 #report-content .rpt-assessment-body h3[data-section="Differential Diagnosis"]     { color: #60A5FA; background: #0A1828; border-color: #3b82f6; }
 #report-content .rpt-assessment-body h3[data-section="Most Likely Diagnosis"]      { color: #34D399; background: #051A10; border-color: #10b981; }
 #report-content .rpt-assessment-body h3[data-section="Recommended Investigations"] { color: #FBBF24; background: #1A1200; border-color: #f59e0b; }
@@ -11294,7 +12136,7 @@ Important: Base ONLY on confirmed symptoms. Do not include denied symptoms.`
 #report-content .rpt-assessment-body h3[data-section="Follow-up Recommendations"]  { color: #A78BFA; background: #0F0A1A; border-color: #8b5cf6; }
 #report-content .rpt-assessment-body h3[data-section="Red Flags"]                  { color: #F87171; background: #1A0505; border-color: #ef4444; }
 
-/* â”€â”€â”€ LIGHT theme (PDF clone â€” no #report-content parent) â”€â”€â”€â”€â”€â”€ */
+/* Light (PDF) */
 .rpt-wrap:not(#report-content .rpt-wrap) .rpt-header { border-color: #1a3a5c; }
 .rpt-wrap:not(#report-content .rpt-wrap) .rpt-title  { color: #1a3a5c; }
 .rpt-wrap:not(#report-content .rpt-wrap) .rpt-info-box { background: #eff6ff; border-color: #bfdbfe; }
@@ -11310,8 +12152,6 @@ Important: Base ONLY on confirmed symptoms. Do not include denied symptoms.`
 .rpt-wrap:not(#report-content .rpt-wrap) .rpt-assessment-body p  { color: #374151; }
 .rpt-wrap:not(#report-content .rpt-wrap) .rpt-assessment-body li { color: #374151; }
 .rpt-wrap:not(#report-content .rpt-wrap) .rpt-assessment-body strong { color: #111827; }
-
-/* Colored subheadings â€” LIGHT (PDF) */
 .rpt-wrap:not(#report-content .rpt-wrap) .rpt-assessment-body h3[data-section="Differential Diagnosis"]     { color: #1d4ed8; background: #eff6ff; border-color: #2563eb; }
 .rpt-wrap:not(#report-content .rpt-wrap) .rpt-assessment-body h3[data-section="Most Likely Diagnosis"]      { color: #065f46; background: #ecfdf5; border-color: #059669; }
 .rpt-wrap:not(#report-content .rpt-wrap) .rpt-assessment-body h3[data-section="Recommended Investigations"] { color: #92400e; background: #fffbeb; border-color: #f59e0b; }
@@ -11333,7 +12173,10 @@ Important: Base ONLY on confirmed symptoms. Do not include denied symptoms.`
     } else {
       // Finance domain
       try {
-        const financePrompt = `You are a senior financial advisor. Analyze this financial consultation thoroughly. Only extract what was EXPLICITLY mentioned. Be detailed and specific.
+        const finLangName = language === 'KANNADA' ? 'Kannada (à²•à²¨à³à²¨à²¡)' : language === 'HINDI' ? 'Hindi (à¤¹à¤¿à¤‚à¤¦à¥€)' : 'English'
+        const financePrompt = `You are a senior financial advisor.
+${language !== 'ENGLISH' ? `CRITICAL: Write ALL string values in ${finLangName}. Every text field below MUST be in ${finLangName}. Numbers and financial terms can stay in English.` : ''}
+Analyze this financial consultation thoroughly. Only extract what was EXPLICITLY mentioned. Be detailed and specific.
 
 Conversation:
 ${transcript}
@@ -11342,22 +12185,22 @@ ${nerEntities ? `Extracted entities:\n${JSON.stringify(nerEntities, null, 2)}` :
 
 Return JSON only:
 {
-  "clientGoals": ["list each financial goal discussed in detail"],
+  "clientGoals": ["list each financial goal discussed in detail${language !== 'ENGLISH' ? ` â€” write in ${finLangName}` : ''}"],
   "currentIncome": "monthly/annual income if mentioned, else null",
   "monthlyExpenses": "total or breakdown if mentioned, else null",
   "savingsRate": "percentage or amount if mentioned, else null",
   "riskProfile": "conservative/moderate/aggressive â€” infer from discussion",
-  "taxSituation": "current tax bracket, filings, deductions mentioned",
+  "taxSituation": "current tax bracket, filings, deductions mentioned${language !== 'ENGLISH' ? ` â€” write in ${finLangName}` : ''}, else null",
   "liabilities": [{"type":"loan/debt type","amount":"if mentioned","rate":"interest rate if mentioned","tenure":"if mentioned"}],
   "existingInvestments": [{"type":"MF/FD/stocks/etc","details":"specifics mentioned"}],
-  "recommendations": [{"title":"short title","detail":"detailed recommendation with reasoning","priority":"high/medium/low","timeline":"when to act"}],
-  "taxOptimization": [{"strategy":"strategy name","detail":"how to implement","potentialSaving":"estimated saving if possible"}],
-  "riskAssessment": {"overallRisk":"low/medium/high","factors":["risk factors identified"],"mitigations":["suggested mitigations"]},
+  "recommendations": [{"title":"short title${language !== 'ENGLISH' ? ` in ${finLangName}` : ''}","detail":"detailed recommendation${language !== 'ENGLISH' ? ` in ${finLangName}` : ''}","priority":"high/medium/low","timeline":"when to act"}],
+  "taxOptimization": [{"strategy":"strategy name","detail":"how to implement${language !== 'ENGLISH' ? ` in ${finLangName}` : ''}","potentialSaving":"estimated saving if possible"}],
+  "riskAssessment": {"overallRisk":"low/medium/high","factors":["risk factors${language !== 'ENGLISH' ? ` in ${finLangName}` : ''}"],"mitigations":["mitigations${language !== 'ENGLISH' ? ` in ${finLangName}` : ''}"]},
   "incomeExpenseBreakdown": {"income":[{"source":"source","amount":"amount"}],"expenses":[{"category":"category","amount":"amount"}]},
-  "insuranceReview": "insurance coverage mentioned or gaps identified, null if not discussed",
-  "emergencyFund": "status of emergency fund if discussed, null if not",
-  "actionItems": [{"action":"specific action","deadline":"suggested timeline","priority":"high/medium/low"}],
-  "summary": "2-3 sentence executive summary of the entire consultation"
+  "insuranceReview": "insurance coverage mentioned or gaps${language !== 'ENGLISH' ? ` in ${finLangName}` : ''}, null if not discussed",
+  "emergencyFund": "status of emergency fund${language !== 'ENGLISH' ? ` in ${finLangName}` : ''}, null if not discussed",
+  "actionItems": [{"action":"specific action${language !== 'ENGLISH' ? ` in ${finLangName}` : ''}","deadline":"timeline","priority":"high/medium/low"}],
+  "summary": "2-3 sentence executive summary${language !== 'ENGLISH' ? ` in ${finLangName}` : ''}"
 }`
 
         const financeResponse = await groq.chat.completions.create({
@@ -11372,8 +12215,9 @@ Return JSON only:
         try { fd = JSON.parse(financeResponse.choices[0].message.content!) }
         catch { fd = { clientGoals: [], recommendations: [{ title: 'Review needed', detail: 'Please review manually', priority: 'high', timeline: 'Immediate' }] } }
 
-        // Generate detailed analysis narrative
-        const analysisPrompt = `You are a senior financial advisor. Based on this consultation, write a detailed financial analysis.
+        const finTargetLangName = language === 'KANNADA' ? 'Kannada (à²•à²¨à³à²¨à²¡)' : language === 'HINDI' ? 'Hindi (à¤¹à¤¿à¤‚à¤¦à¥€)' : 'English'
+        const analysisPrompt = `You are a senior financial advisor.
+Based on this consultation, write a detailed financial analysis.
 
 Conversation:
 ${transcript}
@@ -11381,7 +12225,8 @@ ${transcript}
 Extracted data:
 ${JSON.stringify(fd, null, 2)}
 
-Write clean HTML only. No markdown. No backticks. Use these EXACT section names in <h3> tags:
+Write clean HTML only. No markdown. No backticks.
+Use these EXACT ENGLISH section names in <h3> tags (DO NOT translate these heading names):
 - Financial Health Assessment
 - Investment Strategy
 - Risk Analysis
@@ -11390,9 +12235,15 @@ Write clean HTML only. No markdown. No backticks. Use these EXACT section names 
 - Retirement & Long-term Planning
 
 Format each section as:
-<h3>Section Name</h3>
-<p>detailed analysis...</p>
-<ul><li>specific point</li></ul>
+<h3>Section Name In English</h3>
+<p>detailed analysis here</p>
+<ul><li>specific point here</li></ul>
+
+${language !== 'ENGLISH' ? `ABSOLUTE REQUIREMENT â€” LANGUAGE:
+The <h3> section headings MUST remain in English exactly as listed above.
+But ALL other text â€” every <p> paragraph, every <li> list item, every explanation â€” MUST be written in ${finTargetLangName}.
+Do NOT write English in <p> or <li> tags. Only ${finTargetLangName} is allowed there.
+Financial terms may stay in English but wrap them in a ${finTargetLangName} sentence.` : ''}
 
 Be thorough and specific. Reference actual numbers discussed. Provide actionable insights.`
 
@@ -11407,33 +12258,73 @@ Be thorough and specific. Reference actual numbers discussed. Provide actionable
           .replace(/```html/gi, '').replace(/```/g, '').trim()
 
         const FIN_ANALYSIS_SECTIONS: Record<string, { dark: string; bg: string; border: string }> = {
-          'Financial Health Assessment': { dark: '#34D399', bg: '#051A10', border: '#10b981' },
-          'Investment Strategy': { dark: '#60A5FA', bg: '#0A1828', border: '#3b82f6' },
-          'Risk Analysis': { dark: '#F87171', bg: '#1A0505', border: '#ef4444' },
-          'Tax Planning Strategy': { dark: '#FBBF24', bg: '#1A1200', border: '#f59e0b' },
-          'Debt Management Plan': { dark: '#F472B6', bg: '#1A0510', border: '#ec4899' },
-          'Retirement & Long-term Planning': { dark: '#A78BFA', bg: '#0F0A1A', border: '#8b5cf6' },
+          'Financial Health Assessment':      { dark: '#34D399', bg: '#051A10', border: '#10b981' },
+          'Investment Strategy':              { dark: '#60A5FA', bg: '#0A1828', border: '#3b82f6' },
+          'Risk Analysis':                    { dark: '#F87171', bg: '#1A0505', border: '#ef4444' },
+          'Tax Planning Strategy':            { dark: '#FBBF24', bg: '#1A1200', border: '#f59e0b' },
+          'Debt Management Plan':             { dark: '#F472B6', bg: '#1A0510', border: '#ec4899' },
+          'Retirement & Long-term Planning':  { dark: '#A78BFA', bg: '#0F0A1A', border: '#8b5cf6' },
         }
 
         Object.entries(FIN_ANALYSIS_SECTIONS).forEach(([name, colors]) => {
           const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
           const regex = new RegExp(`<h3>\\s*${escaped}\\s*</h3>`, 'gi')
-          analysisHtml = analysisHtml.replace(regex, `<h3 data-finsection="${name}">${name}</h3>`)
+          const displayName = (language !== 'ENGLISH' && FIN_SECTION_TRANSLATIONS[name]?.[language]) || name
+          analysisHtml = analysisHtml.replace(regex, `<h3 data-finsection="${name}">${displayName}</h3>`)
         })
 
         const date = new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })
         const deptName = department.replace(/_/g, ' ')
 
-        // Build liabilities table
+        const reportTitle     = language === 'KANNADA' ? 'à²†à²°à³à²¥à²¿à²• à²¸à²®à²¾à²²à³‹à²šà²¨à²¾ à²µà²°à²¦à²¿'       : language === 'HINDI' ? 'à¤µà¤¿à¤¤à¥à¤¤à¥€à¤¯ à¤ªà¤°à¤¾à¤®à¤°à¥à¤¶ à¤°à¤¿à¤ªà¥‹à¤°à¥à¤Ÿ'         : 'FINANCIAL CONSULTATION REPORT'
+        const labelClient     = language === 'KANNADA' ? 'à²—à³à²°à²¾à²¹à²•à²° à²®à²¾à²¹à²¿à²¤à²¿'               : language === 'HINDI' ? 'à¤—à¥à¤°à¤¾à¤¹à¤• à¤œà¤¾à¤¨à¤•à¤¾à¤°à¥€'                   : 'Client Information'
+        const labelName       = language === 'KANNADA' ? 'à²¹à³†à²¸à²°à³'                        : language === 'HINDI' ? 'à¤¨à¤¾à¤®'                              : 'Name'
+        const labelDate       = language === 'KANNADA' ? 'à²¦à²¿à²¨à²¾à²‚à²•'                       : language === 'HINDI' ? 'à¤¤à¤¾à¤°à¥€à¤–'                            : 'Date'
+        const labelDept       = language === 'KANNADA' ? 'à²µà²¿à²­à²¾à²—'                        : language === 'HINDI' ? 'à¤µà¤¿à¤­à¤¾à¤—'                            : 'Department'
+        const labelRisk       = language === 'KANNADA' ? 'à²°à²¿à²¸à³à²•à³ à²ªà³à²°à³Šà²«à³ˆà²²à³'              : language === 'HINDI' ? 'à¤œà¥‹à¤–à¤¿à¤® à¤ªà¥à¤°à¥‹à¤«à¤¾à¤‡à¤²'                   : 'Risk Profile'
+        const labelIncome     = language === 'KANNADA' ? 'à²†à²¦à²¾à²¯'                         : language === 'HINDI' ? 'à¤†à¤¯'                               : 'Income'
+        const labelExpenses   = language === 'KANNADA' ? 'à²µà³†à²šà³à²šà²—à²³à³'                    : language === 'HINDI' ? 'à¤–à¤°à¥à¤š'                             : 'Expenses'
+        const labelSavings    = language === 'KANNADA' ? 'à²‰à²³à²¿à²¤à²¾à²¯ à²¦à²°'                   : language === 'HINDI' ? 'à¤¬à¤šà¤¤ à¤¦à¤°'                           : 'Savings Rate'
+        const labelEmergency  = language === 'KANNADA' ? 'à²¤à³à²°à³à²¤à³ à²¨à²¿à²§à²¿'                 : language === 'HINDI' ? 'à¤†à¤ªà¤¾à¤¤à¤•à¤¾à¤²à¥€à¤¨ à¤¨à¤¿à¤§à¤¿'                   : 'Emergency Fund'
+        const labelTax        = language === 'KANNADA' ? 'à²¤à³†à²°à²¿à²—à³† à²ªà²°à²¿à²¸à³à²¥à²¿à²¤à²¿'            : language === 'HINDI' ? 'à¤•à¤° à¤¸à¥à¤¥à¤¿à¤¤à¤¿'                        : 'Tax Situation'
+        const labelInsurance  = language === 'KANNADA' ? 'à²µà²¿à²®à³†'                         : language === 'HINDI' ? 'à¤¬à¥€à¤®à¤¾'                             : 'Insurance'
+        const labelSummary    = language === 'KANNADA' ? 'à²•à²¾à²°à³à²¯à²¨à²¿à²°à³à²µà²¾à²¹à²• à²¸à²¾à²°à²¾à²‚à²¶'        : language === 'HINDI' ? 'à¤•à¤¾à¤°à¥à¤¯à¤•à¤¾à¤°à¥€ à¤¸à¤¾à¤°à¤¾à¤‚à¤¶'                 : 'Executive Summary'
+        const labelGoals      = language === 'KANNADA' ? 'à²†à²°à³à²¥à²¿à²• à²—à³à²°à²¿à²—à²³à³'              : language === 'HINDI' ? 'à¤µà¤¿à¤¤à¥à¤¤à¥€à¤¯ à¤²à¤•à¥à¤·à¥à¤¯'                   : 'Financial Goals'
+        const labelLiabilities= language === 'KANNADA' ? 'à²¬à²¾à²•à²¿ à²¹à³Šà²£à³†à²—à²¾à²°à²¿à²•à³†à²—à²³à³'         : language === 'HINDI' ? 'à¤¬à¤•à¤¾à¤¯à¤¾ à¤¦à¥‡à¤¨à¤¦à¤¾à¤°à¤¿à¤¯à¤¾à¤‚'                 : 'Outstanding Liabilities'
+        const labelRecs       = language === 'KANNADA' ? 'à²¶à²¿à²«à²¾à²°à²¸à³à²—à²³à³'                  : language === 'HINDI' ? 'à¤¸à¤¿à¤«à¤¾à¤°à¤¿à¤¶à¥‡à¤‚'                        : 'Recommendations'
+        const labelRiskAssess = language === 'KANNADA' ? 'à²°à²¿à²¸à³à²•à³ à²®à³Œà²²à³à²¯à²®à²¾à²ªà²¨'            : language === 'HINDI' ? 'à¤œà¥‹à¤–à¤¿à¤® à¤®à¥‚à¤²à¥à¤¯à¤¾à¤‚à¤•à¤¨'                  : 'Risk Assessment'
+        const labelTaxOpt     = language === 'KANNADA' ? 'à²¤à³†à²°à²¿à²—à³† à²†à²ªà³à²Ÿà²¿à²®à³ˆà²¸à³‡à²¶à²¨à³'         : language === 'HINDI' ? 'à¤•à¤° à¤…à¤¨à¥à¤•à¥‚à¤²à¤¨ à¤°à¤£à¤¨à¥€à¤¤à¤¿à¤¯à¤¾à¤'            : 'Tax Optimization Strategies'
+        const labelActions    = language === 'KANNADA' ? 'à²•à³à²°à²¿à²¯à²¾ à²à²Ÿà²‚à²—à²³à³'               : language === 'HINDI' ? 'à¤•à¤¾à¤°à¥à¤¯ à¤†à¤‡à¤Ÿà¤®'                       : 'Action Items'
+        const labelAnalysis   = language === 'KANNADA' ? 'à²µà²¿à²µà²°à²µà²¾à²¦ à²†à²°à³à²¥à²¿à²• à²µà²¿à²¶à³à²²à³‡à²·à²£à³†'   : language === 'HINDI' ? 'à¤µà¤¿à¤¸à¥à¤¤à¥ƒà¤¤ à¤µà¤¿à¤¤à¥à¤¤à¥€à¤¯ à¤µà¤¿à¤¶à¥à¤²à¥‡à¤·à¤£'        : 'Detailed Financial Analysis'
+        const labelConfidential = language === 'KANNADA' ? 'à²—à³Œà²ªà³à²¯'                     : language === 'HINDI' ? 'à¤—à¥‹à¤ªà¤¨à¥€à¤¯'                           : 'Confidential'
+        const labelGenerated  = language === 'KANNADA' ? 'à²µà²¾à²¯à³à²¸à³ à²‡à²‚à²Ÿà³†à²²à²¿à²œà³†à²¨à³à²¸à³ à²¸à²¿à²¸à³à²Ÿà²®à³ à²®à³‚à²²à²• à²°à²šà²¿à²¸à²²à²¾à²—à²¿à²¦à³†' : language === 'HINDI' ? 'à¤µà¥‰à¤¯à¤¸ à¤‡à¤‚à¤Ÿà¥‡à¤²à¤¿à¤œà¥‡à¤‚à¤¸ à¤¸à¤¿à¤¸à¥à¤Ÿà¤® à¤¦à¥à¤µà¤¾à¤°à¤¾ à¤‰à¤¤à¥à¤ªà¤¨à¥à¤¨' : 'Generated by Voice Intelligence System'
+        const labelType       = language === 'KANNADA' ? 'à²ªà³à²°à²•à²¾à²°'  : language === 'HINDI' ? 'à¤ªà¥à¤°à¤•à¤¾à¤°'   : 'Type'
+        const labelAmount     = language === 'KANNADA' ? 'à²®à³Šà²¤à³à²¤'   : language === 'HINDI' ? 'à¤°à¤¾à¤¶à¤¿'     : 'Amount'
+        const labelRate       = language === 'KANNADA' ? 'à²¦à²°'       : language === 'HINDI' ? 'à¤¦à¤°'       : 'Rate'
+        const labelTenure     = language === 'KANNADA' ? 'à²…à²µà²§à²¿'     : language === 'HINDI' ? 'à¤…à¤µà¤§à¤¿'     : 'Tenure'
+        const labelOverallRisk= language === 'KANNADA' ? 'à²’à²Ÿà³à²Ÿà²¾à²°à³† à²°à²¿à²¸à³à²•à³ à²®à²Ÿà³à²Ÿ' : language === 'HINDI' ? 'à¤¸à¤®à¤—à¥à¤° à¤œà¥‹à¤–à¤¿à¤® à¤¸à¥à¤¤à¤°' : 'Overall Risk Level'
+        const labelRiskFactors= language === 'KANNADA' ? 'à²°à²¿à²¸à³à²•à³ à²…à²‚à²¶à²—à²³à³'      : language === 'HINDI' ? 'à¤œà¥‹à¤–à¤¿à¤® à¤•à¤¾à¤°à¤•'        : 'Risk Factors'
+        const labelMitigations= language === 'KANNADA' ? 'à²¤à²—à³à²—à²¿à²¸à³à²µ à²•à³à²°à²®à²—à²³à³'   : language === 'HINDI' ? 'à¤¶à¤®à¤¨ à¤‰à¤ªà¤¾à¤¯'          : 'Mitigations'
+
         const liabilitiesHtml = fd.liabilities?.length > 0 ? `
 <div class="rpt-section">
-  <h2 class="rpt-fin-heading" data-fin="liabilities">Outstanding Liabilities</h2>
-  <table class="rpt-table"><tr><td class="rpt-td-label">Type</td><td class="rpt-td-label">Amount</td><td class="rpt-td-label">Rate</td><td class="rpt-td-label">Tenure</td></tr>
-  ${fd.liabilities.map((l: any) => `<tr><td class="rpt-td-value">${l.type || '-'}</td><td class="rpt-td-value">${l.amount || '-'}</td><td class="rpt-td-value">${l.rate || '-'}</td><td class="rpt-td-value">${l.tenure || '-'}</td></tr>`).join('')}
+  <h2 class="rpt-fin-heading" data-fin="liabilities">${labelLiabilities}</h2>
+  <table class="rpt-table">
+    <tr>
+      <td class="rpt-td-label">${labelType}</td>
+      <td class="rpt-td-label">${labelAmount}</td>
+      <td class="rpt-td-label">${labelRate}</td>
+      <td class="rpt-td-label">${labelTenure}</td>
+    </tr>
+    ${fd.liabilities.map((l: any) => `<tr>
+      <td class="rpt-td-value">${l.type || '-'}</td>
+      <td class="rpt-td-value">${l.amount || '-'}</td>
+      <td class="rpt-td-value">${l.rate || '-'}</td>
+      <td class="rpt-td-value">${l.tenure || '-'}</td>
+    </tr>`).join('')}
   </table>
 </div>` : ''
 
-        // Build recommendations with priority badges
         const recsHtml = fd.recommendations?.length > 0 ? fd.recommendations.map((r: any) => `
 <div style="padding:10px 14px;border-radius:8px;margin-bottom:8px;border-left:3px solid ${r.priority === 'high' ? '#ef4444' : r.priority === 'medium' ? '#f59e0b' : '#34D399'};">
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
@@ -11446,103 +12337,101 @@ Be thorough and specific. Reference actual numbers discussed. Provide actionable
   <p class="rpt-body">${r.detail || ''}</p>
 </div>`).join('') : '<p class="rpt-body">No specific recommendations at this time.</p>'
 
-        // Build action items
-        const actionsHtml = fd.actionItems?.length > 0 ? fd.actionItems.map((a: any) => `
-<li class="rpt-body"><strong>${a.action}</strong>${a.deadline ? ` â€” <em>by ${a.deadline}</em>` : ''}${a.priority ? ` [${a.priority}]` : ''}</li>`).join('') : '<li class="rpt-body">No immediate actions identified</li>'
+        const actionsHtml = fd.actionItems?.length > 0
+          ? fd.actionItems.map((a: any) => `<li class="rpt-body"><strong>${a.action}</strong>${a.deadline ? ` â€” <em>by ${a.deadline}</em>` : ''}${a.priority ? ` [${a.priority}]` : ''}</li>`).join('')
+          : '<li class="rpt-body">No immediate actions identified</li>'
 
-        // Tax optimization
-        const taxHtml = fd.taxOptimization?.length > 0 ? fd.taxOptimization.map((t: any) => `
-<li class="rpt-body"><strong>${t.strategy}</strong>: ${t.detail || ''}${t.potentialSaving ? ` â€” Potential saving: ${t.potentialSaving}` : ''}</li>`).join('') : '<li class="rpt-body">No tax optimization strategies discussed</li>'
+        const taxHtml = fd.taxOptimization?.length > 0
+          ? fd.taxOptimization.map((t: any) => `<li class="rpt-body"><strong>${t.strategy}</strong>: ${t.detail || ''}${t.potentialSaving ? ` â€” ${t.potentialSaving}` : ''}</li>`).join('')
+          : '<li class="rpt-body">No tax optimization strategies discussed</li>'
 
         finalReport = `
 <div class="rpt-wrap">
-
   <div class="rpt-header">
-    <h1 class="rpt-title">FINANCIAL CONSULTATION REPORT</h1>
-    <p class="rpt-subtitle">Confidential &nbsp;â€¢&nbsp; ${deptName} Department</p>
+    <h1 class="rpt-title">${reportTitle}</h1>
+    <p class="rpt-subtitle">${labelConfidential} &nbsp;â€¢&nbsp; ${deptName}</p>
   </div>
 
   <div class="rpt-info-box">
-    <h2 class="rpt-section-title rpt-section-title--green">Client Information</h2>
+    <h2 class="rpt-section-title rpt-section-title--green">${labelClient}</h2>
     <table class="rpt-table">
       <tr>
-        <td class="rpt-td-label">Name</td>
+        <td class="rpt-td-label">${labelName}</td>
         <td class="rpt-td-value">${personName || 'Valued Client'}</td>
-        <td class="rpt-td-label">Date</td>
+        <td class="rpt-td-label">${labelDate}</td>
         <td class="rpt-td-value">${date}</td>
       </tr>
       <tr>
-        <td class="rpt-td-label">Department</td>
+        <td class="rpt-td-label">${labelDept}</td>
         <td class="rpt-td-value">${deptName}</td>
-        <td class="rpt-td-label">Risk Profile</td>
+        <td class="rpt-td-label">${labelRisk}</td>
         <td class="rpt-td-value" style="text-transform:capitalize;">${fd.riskProfile || 'To be assessed'}</td>
       </tr>
       ${fd.currentIncome ? `<tr>
-        <td class="rpt-td-label">Income</td>
+        <td class="rpt-td-label">${labelIncome}</td>
         <td class="rpt-td-value">${fd.currentIncome}</td>
-        <td class="rpt-td-label">Expenses</td>
+        <td class="rpt-td-label">${labelExpenses}</td>
         <td class="rpt-td-value">${fd.monthlyExpenses || 'Not specified'}</td>
       </tr>` : ''}
       ${fd.savingsRate ? `<tr>
-        <td class="rpt-td-label">Savings Rate</td>
+        <td class="rpt-td-label">${labelSavings}</td>
         <td class="rpt-td-value">${fd.savingsRate}</td>
-        <td class="rpt-td-label">Emergency Fund</td>
+        <td class="rpt-td-label">${labelEmergency}</td>
         <td class="rpt-td-value">${fd.emergencyFund || 'Not discussed'}</td>
       </tr>` : ''}
       ${fd.taxSituation ? `<tr>
-        <td class="rpt-td-label">Tax Situation</td>
+        <td class="rpt-td-label">${labelTax}</td>
         <td class="rpt-td-value" colspan="3">${fd.taxSituation}</td>
       </tr>` : ''}
       ${fd.insuranceReview ? `<tr>
-        <td class="rpt-td-label">Insurance</td>
+        <td class="rpt-td-label">${labelInsurance}</td>
         <td class="rpt-td-value" colspan="3">${fd.insuranceReview}</td>
       </tr>` : ''}
     </table>
   </div>
 
   ${fd.summary ? `<div class="rpt-section">
-    <h2 class="rpt-section-title rpt-section-title--green">Executive Summary</h2>
+    <h2 class="rpt-section-title rpt-section-title--green">${labelSummary}</h2>
     <p class="rpt-body">${fd.summary}</p>
   </div>` : ''}
 
   <div class="rpt-section">
-    <h2 class="rpt-fin-heading" data-fin="clientGoals">Financial Goals</h2>
+    <h2 class="rpt-fin-heading" data-fin="clientGoals">${labelGoals}</h2>
     <ul>${(fd.clientGoals?.length ? fd.clientGoals : ['Not specified']).map((g: string) => `<li class="rpt-body">${g}</li>`).join('')}</ul>
   </div>
 
   ${liabilitiesHtml}
 
   <div class="rpt-section">
-    <h2 class="rpt-fin-heading" data-fin="recommendations">Recommendations</h2>
+    <h2 class="rpt-fin-heading" data-fin="recommendations">${labelRecs}</h2>
     ${recsHtml}
   </div>
 
   ${fd.riskAssessment ? `<div class="rpt-section">
-    <h2 class="rpt-fin-heading" data-fin="riskAssessment">Risk Assessment</h2>
-    <p class="rpt-body"><strong>Overall Risk Level:</strong> ${fd.riskAssessment.overallRisk || 'Not assessed'}</p>
-    ${fd.riskAssessment.factors?.length ? `<p class="rpt-body" style="margin-top:6px;"><strong>Risk Factors:</strong></p><ul>${fd.riskAssessment.factors.map((f: string) => `<li class="rpt-body">${f}</li>`).join('')}</ul>` : ''}
-    ${fd.riskAssessment.mitigations?.length ? `<p class="rpt-body" style="margin-top:6px;"><strong>Mitigations:</strong></p><ul>${fd.riskAssessment.mitigations.map((m: string) => `<li class="rpt-body">${m}</li>`).join('')}</ul>` : ''}
+    <h2 class="rpt-fin-heading" data-fin="riskAssessment">${labelRiskAssess}</h2>
+    <p class="rpt-body"><strong>${labelOverallRisk}:</strong> ${fd.riskAssessment.overallRisk || 'Not assessed'}</p>
+    ${fd.riskAssessment.factors?.length ? `<p class="rpt-body" style="margin-top:6px;"><strong>${labelRiskFactors}:</strong></p><ul>${fd.riskAssessment.factors.map((f: string) => `<li class="rpt-body">${f}</li>`).join('')}</ul>` : ''}
+    ${fd.riskAssessment.mitigations?.length ? `<p class="rpt-body" style="margin-top:6px;"><strong>${labelMitigations}:</strong></p><ul>${fd.riskAssessment.mitigations.map((m: string) => `<li class="rpt-body">${m}</li>`).join('')}</ul>` : ''}
   </div>` : ''}
 
   <div class="rpt-section">
-    <h2 class="rpt-fin-heading" data-fin="taxOptimization">Tax Optimization Strategies</h2>
+    <h2 class="rpt-fin-heading" data-fin="taxOptimization">${labelTaxOpt}</h2>
     <ul>${taxHtml}</ul>
   </div>
 
   <div class="rpt-section">
-    <h2 class="rpt-fin-heading" data-fin="actionItems">Action Items</h2>
+    <h2 class="rpt-fin-heading" data-fin="actionItems">${labelActions}</h2>
     <ol>${actionsHtml}</ol>
   </div>
 
   <div class="rpt-section rpt-assessment">
-    <h2 class="rpt-section-title rpt-section-title--green">Detailed Financial Analysis</h2>
+    <h2 class="rpt-section-title rpt-section-title--green">${labelAnalysis}</h2>
     <div class="rpt-assessment-body">${analysisHtml}</div>
   </div>
 
   <div class="rpt-footer">
-    Generated by Voice Intelligence System &nbsp;|&nbsp; ${date}
+    ${labelGenerated} &nbsp;|&nbsp; ${date}
   </div>
-
 </div>
 
 <style>
@@ -11558,9 +12447,14 @@ Be thorough and specific. Reference actual numbers discussed. Provide actionable
 .rpt-section-title { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding-left: 10px; margin: 0 0 7px 0; border-left: 3px solid; }
 .rpt-fin-heading { font-size: 0.88rem; font-weight: 700; margin: 14px 0 6px 0; padding: 5px 10px 5px 12px; border-radius: 4px; border-left: 3px solid; }
 .rpt-body { font-size: 0.875rem; line-height: 1.75; margin: 0; }
-ul { padding-left: 20px; margin: 4px 0 8px; }
+ul, ol { padding-left: 20px; margin: 4px 0 8px; }
 li { margin-bottom: 4px; line-height: 1.65; }
 .rpt-footer { font-size: 0.72rem; text-align: center; margin-top: 24px; padding-top: 8px; border-top: 1px solid; opacity: 0.45; }
+.rpt-assessment-body h3 { font-size: 0.88rem; font-weight: 700; margin: 16px 0 5px 0; padding: 5px 10px 5px 12px; border-radius: 4px; border-left: 3px solid; display: block; }
+.rpt-assessment-body p { font-size: 0.875rem; line-height: 1.75; margin: 0 0 6px 0; }
+.rpt-assessment-body ul, .rpt-assessment-body ol { font-size: 0.875rem; padding-left: 20px; margin: 4px 0 8px; }
+.rpt-assessment-body li { margin-bottom: 4px; line-height: 1.65; }
+.rpt-assessment-body strong { font-weight: 700; }
 
 /* Dark */
 #report-content .rpt-wrap { color: #CCC; }
@@ -11571,6 +12465,7 @@ li { margin-bottom: 4px; line-height: 1.65; }
 #report-content .rpt-td-label { color: #6BAF8F; }
 #report-content .rpt-td-value { color: #CCC; }
 #report-content .rpt-section-title--green { color: #34D399; border-color: #10b981; }
+#report-content .rpt-section-title--blue  { color: #60A5FA; border-color: #3b82f6; }
 #report-content .rpt-body { color: #BBB; }
 #report-content li { color: #BBB; }
 #report-content .rpt-footer { border-color: #2A2A2A; color: #555; }
@@ -11580,23 +12475,22 @@ li { margin-bottom: 4px; line-height: 1.65; }
 #report-content [data-fin="actionItems"]     { color: #A78BFA; background: #0F0A1A; border-color: #8b5cf6; }
 #report-content [data-fin="liabilities"]     { color: #F472B6; background: #1A0510; border-color: #ec4899; }
 #report-content [data-fin="riskAssessment"]  { color: #F87171; background: #1A0505; border-color: #ef4444; }
-
-/* Financial analysis subheadings â€” DARK */
+#report-content .rpt-assessment-body { color: #BBB; }
+#report-content .rpt-assessment-body p { color: #BBB; }
+#report-content .rpt-assessment-body li { color: #BBB; }
+#report-content .rpt-assessment-body strong { color: #E8E8E8; }
 #report-content .rpt-assessment-body h3[data-finsection="Financial Health Assessment"] { color: #34D399; background: #051A10; border-color: #10b981; }
 #report-content .rpt-assessment-body h3[data-finsection="Investment Strategy"]         { color: #60A5FA; background: #0A1828; border-color: #3b82f6; }
 #report-content .rpt-assessment-body h3[data-finsection="Risk Analysis"]               { color: #F87171; background: #1A0505; border-color: #ef4444; }
 #report-content .rpt-assessment-body h3[data-finsection="Tax Planning Strategy"]       { color: #FBBF24; background: #1A1200; border-color: #f59e0b; }
 #report-content .rpt-assessment-body h3[data-finsection="Debt Management Plan"]        { color: #F472B6; background: #1A0510; border-color: #ec4899; }
 #report-content .rpt-assessment-body h3[data-finsection="Retirement & Long-term Planning"] { color: #A78BFA; background: #0F0A1A; border-color: #8b5cf6; }
-
-/* Assessment body dark */
-#report-content .rpt-assessment-body { color: #BBB; }
-#report-content .rpt-assessment-body p { color: #BBB; }
-#report-content .rpt-assessment-body li { color: #BBB; }
-#report-content .rpt-assessment-body strong { color: #E8E8E8; }
-#report-content .rpt-assessment-body h3 { font-size: 0.88rem; font-weight: 700; margin: 16px 0 5px 0; padding: 5px 10px 5px 12px; border-radius: 4px; border-left: 3px solid; display: block; }
-
-ol { padding-left: 20px; margin: 4px 0 8px; }
+#report-content .rpt-assessment-body h3[data-section="Differential Diagnosis"]     { color: #60A5FA; background: #0A1828; border-color: #3b82f6; }
+#report-content .rpt-assessment-body h3[data-section="Most Likely Diagnosis"]      { color: #34D399; background: #051A10; border-color: #10b981; }
+#report-content .rpt-assessment-body h3[data-section="Recommended Investigations"] { color: #FBBF24; background: #1A1200; border-color: #f59e0b; }
+#report-content .rpt-assessment-body h3[data-section="Treatment Plan"]             { color: #F472B6; background: #1A0510; border-color: #ec4899; }
+#report-content .rpt-assessment-body h3[data-section="Follow-up Recommendations"]  { color: #A78BFA; background: #0F0A1A; border-color: #8b5cf6; }
+#report-content .rpt-assessment-body h3[data-section="Red Flags"]                  { color: #F87171; background: #1A0505; border-color: #ef4444; }
 
 /* Light (PDF) */
 .rpt-wrap:not(#report-content .rpt-wrap) .rpt-header { border-color: #065f46; }
@@ -11606,6 +12500,7 @@ ol { padding-left: 20px; margin: 4px 0 8px; }
 .rpt-wrap:not(#report-content .rpt-wrap) .rpt-td-label { color: #4b5563; }
 .rpt-wrap:not(#report-content .rpt-wrap) .rpt-td-value { color: #111827; }
 .rpt-wrap:not(#report-content .rpt-wrap) .rpt-section-title--green { color: #065f46; border-color: #059669; }
+.rpt-wrap:not(#report-content .rpt-wrap) .rpt-section-title--blue  { color: #1d4ed8; border-color: #2563eb; }
 .rpt-wrap:not(#report-content .rpt-wrap) .rpt-body { color: #374151; }
 .rpt-wrap:not(#report-content .rpt-wrap) li { color: #374151; }
 .rpt-wrap:not(#report-content .rpt-wrap) .rpt-footer { border-color: #e5e7eb; color: #9ca3af; }
@@ -11615,18 +12510,22 @@ ol { padding-left: 20px; margin: 4px 0 8px; }
 .rpt-wrap:not(#report-content .rpt-wrap) [data-fin="actionItems"]     { color: #4c1d95; background: #f5f3ff; border-color: #8b5cf6; }
 .rpt-wrap:not(#report-content .rpt-wrap) [data-fin="liabilities"]     { color: #9d174d; background: #fdf2f8; border-color: #ec4899; }
 .rpt-wrap:not(#report-content .rpt-wrap) [data-fin="riskAssessment"]  { color: #991b1b; background: #fef2f2; border-color: #ef4444; }
-
-/* Financial analysis subheadings â€” LIGHT (PDF) */
+.rpt-wrap:not(#report-content .rpt-wrap) .rpt-assessment-body { color: #374151; }
+.rpt-wrap:not(#report-content .rpt-wrap) .rpt-assessment-body p  { color: #374151; }
+.rpt-wrap:not(#report-content .rpt-wrap) .rpt-assessment-body li { color: #374151; }
+.rpt-wrap:not(#report-content .rpt-wrap) .rpt-assessment-body strong { color: #111827; }
 .rpt-wrap:not(#report-content .rpt-wrap) .rpt-assessment-body h3[data-finsection="Financial Health Assessment"] { color: #065f46; background: #ecfdf5; border-color: #059669; }
 .rpt-wrap:not(#report-content .rpt-wrap) .rpt-assessment-body h3[data-finsection="Investment Strategy"]         { color: #1d4ed8; background: #eff6ff; border-color: #2563eb; }
 .rpt-wrap:not(#report-content .rpt-wrap) .rpt-assessment-body h3[data-finsection="Risk Analysis"]               { color: #991b1b; background: #fef2f2; border-color: #ef4444; }
 .rpt-wrap:not(#report-content .rpt-wrap) .rpt-assessment-body h3[data-finsection="Tax Planning Strategy"]       { color: #92400e; background: #fffbeb; border-color: #f59e0b; }
 .rpt-wrap:not(#report-content .rpt-wrap) .rpt-assessment-body h3[data-finsection="Debt Management Plan"]        { color: #9d174d; background: #fdf2f8; border-color: #ec4899; }
 .rpt-wrap:not(#report-content .rpt-wrap) .rpt-assessment-body h3[data-finsection="Retirement & Long-term Planning"] { color: #4c1d95; background: #f5f3ff; border-color: #8b5cf6; }
-.rpt-wrap:not(#report-content .rpt-wrap) .rpt-assessment-body { color: #374151; }
-.rpt-wrap:not(#report-content .rpt-wrap) .rpt-assessment-body p { color: #374151; }
-.rpt-wrap:not(#report-content .rpt-wrap) .rpt-assessment-body li { color: #374151; }
-.rpt-wrap:not(#report-content .rpt-wrap) .rpt-assessment-body strong { color: #111827; }
+.rpt-wrap:not(#report-content .rpt-wrap) .rpt-assessment-body h3[data-section="Differential Diagnosis"]     { color: #1d4ed8; background: #eff6ff; border-color: #2563eb; }
+.rpt-wrap:not(#report-content .rpt-wrap) .rpt-assessment-body h3[data-section="Most Likely Diagnosis"]      { color: #065f46; background: #ecfdf5; border-color: #059669; }
+.rpt-wrap:not(#report-content .rpt-wrap) .rpt-assessment-body h3[data-section="Recommended Investigations"] { color: #92400e; background: #fffbeb; border-color: #f59e0b; }
+.rpt-wrap:not(#report-content .rpt-wrap) .rpt-assessment-body h3[data-section="Treatment Plan"]             { color: #9d174d; background: #fdf2f8; border-color: #ec4899; }
+.rpt-wrap:not(#report-content .rpt-wrap) .rpt-assessment-body h3[data-section="Follow-up Recommendations"]  { color: #4c1d95; background: #f5f3ff; border-color: #8b5cf6; }
+.rpt-wrap:not(#report-content .rpt-wrap) .rpt-assessment-body h3[data-section="Red Flags"]                  { color: #991b1b; background: #fef2f2; border-color: #ef4444; }
 </style>`
 
       } catch (err) {
@@ -11645,10 +12544,9 @@ ol { padding-left: 20px; margin: 4px 0 8px; }
 
 ===== C:\Users\Jatin\Desktop\turbos-medifi\app\api\ai\generate-summary\route.ts =====
 // app/api/ai/generate-summary/route.ts
-// Generates a simple, patient-friendly plain-language summary in EN, HI, KN
 
 import { NextRequest, NextResponse } from 'next/server'
-import { groq, MODELS } from '@/lib/groq'
+import { groqWithFallback } from '@/lib/groq'
 import { prisma } from '@/lib/prisma'
 import crypto from 'crypto'
 
@@ -11671,9 +12569,10 @@ export async function POST(req: NextRequest) {
     const deptName = (department || '').replace(/_/g, ' ')
     const isHealthcare = domain === 'HEALTHCARE'
 
-    // â”€â”€ Build context string â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    const trimmedTranscript = transcript?.slice(0, 2000) ?? ''
+
     const context = [
-      transcript ? `CONVERSATION:\n${transcript.slice(0, 3000)}` : '',
+      trimmedTranscript ? `CONVERSATION:\n${trimmedTranscript}` : '',
       nerEntities && Object.keys(nerEntities).length > 0
         ? `EXTRACTED ENTITIES:\n${JSON.stringify(nerEntities, null, 2)}`
         : '',
@@ -11689,11 +12588,12 @@ export async function POST(req: NextRequest) {
     if (sessionId) {
       const session = await prisma.session.findUnique({ where: { id: sessionId } })
       if (session?.smartSummaryHash === currentHash && session?.smartSummary) {
+        console.log('Returning cached summary')
         return NextResponse.json({ summary: session.smartSummary })
       }
     }
 
-    // â”€â”€ Healthcare prompt â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â”€â”€ Healthcare prompt â€” Kannada FIRST so it never gets cut off â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const healthcarePrompt = `You are a compassionate doctor's assistant. Based on the consultation data below, write a simple, clear patient summary that ANY person can understand â€” even someone with no medical education.
 
 Patient: ${personName || 'the patient'}
@@ -11701,40 +12601,41 @@ Department: ${deptName}
 
 ${context}
 
-Generate a JSON with these EXACT keys. Each value must be in complete sentences that a layperson can easily understand. No medical jargon. Use simple everyday words.
+IMPORTANT: You MUST generate all three languages completely. Do NOT stop early.
+Kannada is the PRIMARY language â€” generate it first and make sure it is complete.
 
-Return JSON only:
+Return JSON only with these EXACT keys in this EXACT order:
 {
+  "kannada": {
+    "mainProblem": "à²®à³à²–à³à²¯ à²¸à²®à²¸à³à²¯à³† à²¸à²°à²³ à²•à²¨à³à²¨à²¡à²¦à²²à³à²²à²¿",
+    "keyFindings": ["à²¸à²°à²³ à²¤à³€à²°à³à²®à²¾à²¨ 1"],
+    "medicines": ["à²”à²·à²§à²¿ à²¹à³†à²¸à²°à³ â€” à²à²¨à³ à²®à²¾à²¡à³à²¤à³à²¤à²¦à³† à²®à²¤à³à²¤à³ à²¯à²¾à²µà²¾à²— à²¤à³†à²—à³†à²¦à³à²•à³Šà²³à³à²³à²¬à³‡à²•à³"],
+    "doList": ["à²à²¨à³ à²®à²¾à²¡à²¬à³‡à²•à³ à²…à²¥à²µà²¾ à²®à²¾à²¡à²¬à²¾à²°à²¦à³"],
+    "followUp": "à²®à³à²‚à²¦à²¿à²¨ à²­à³‡à²Ÿà²¿ à²¯à²¾à²µà²¾à²— à²®à²¤à³à²¤à³ à²à²•à³†",
+    "redFlags": ["à²…à²ªà²¾à²¯à²¦ à²¸à²‚à²•à³‡à²¤ â€” à²¤à²•à³à²·à²£ à²¬à²¨à³à²¨à²¿ à²…à²‚à²¦à²°à³†..."],
+    "encouragement": "à²°à³‹à²—à²¿à²—à³† à²ªà³à²°à³‹à²¤à³à²¸à²¾à²¹ à²¨à³€à²¡à³à²µ à²’à²‚à²¦à³ à²¬à³†à²šà³à²šà²—à²¿à²¨ à²µà²¾à²•à³à²¯"
+  },
   "english": {
     "mainProblem": "1-2 simple sentences describing what the problem is",
-    "keyFindings": ["simple finding 1", "simple finding 2", "..."],
-    "medicines": ["medicine name â€” what it does and when to take it", "..."],
-    "doList": ["specific thing to do or avoid", "..."],
+    "keyFindings": ["simple finding 1"],
+    "medicines": ["medicine name â€” what it does and when to take it"],
+    "doList": ["specific thing to do or avoid"],
     "followUp": "when and why to come back",
-    "redFlags": ["warning sign â€” come immediately if...", "..."],
+    "redFlags": ["warning sign â€” come immediately if..."],
     "encouragement": "one warm, encouraging sentence for the patient"
   },
   "hindi": {
     "mainProblem": "à¤®à¥à¤–à¥à¤¯ à¤¸à¤®à¤¸à¥à¤¯à¤¾ à¤¸à¤°à¤² à¤¹à¤¿à¤‚à¤¦à¥€ à¤®à¥‡à¤‚",
-    "keyFindings": ["à¤¸à¤°à¤² à¤œà¤¾à¤à¤š à¤ªà¤°à¤¿à¤£à¤¾à¤® 1", "..."],
-    "medicines": ["à¤¦à¤µà¤¾à¤ˆ à¤•à¤¾ à¤¨à¤¾à¤® â€” à¤•à¥à¤¯à¤¾ à¤•à¤°à¤¤à¥€ à¤¹à¥ˆ à¤”à¤° à¤•à¤¬ à¤²à¥‡à¤¨à¥€ à¤¹à¥ˆ", "..."],
-    "doList": ["à¤•à¥à¤¯à¤¾ à¤•à¤°à¥‡à¤‚ à¤¯à¤¾ à¤¨ à¤•à¤°à¥‡à¤‚", "..."],
+    "keyFindings": ["à¤¸à¤°à¤² à¤œà¤¾à¤à¤š à¤ªà¤°à¤¿à¤£à¤¾à¤® 1"],
+    "medicines": ["à¤¦à¤µà¤¾à¤ˆ à¤•à¤¾ à¤¨à¤¾à¤® â€” à¤•à¥à¤¯à¤¾ à¤•à¤°à¤¤à¥€ à¤¹à¥ˆ à¤”à¤° à¤•à¤¬ à¤²à¥‡à¤¨à¥€ à¤¹à¥ˆ"],
+    "doList": ["à¤•à¥à¤¯à¤¾ à¤•à¤°à¥‡à¤‚ à¤¯à¤¾ à¤¨ à¤•à¤°à¥‡à¤‚"],
     "followUp": "à¤…à¤—à¤²à¥€ à¤¬à¤¾à¤° à¤•à¤¬ à¤”à¤° à¤•à¥à¤¯à¥‹à¤‚ à¤†à¤à¤‚",
-    "redFlags": ["à¤–à¤¤à¤°à¥‡ à¤•à¤¾ à¤¸à¤‚à¤•à¥‡à¤¤ â€” à¤¤à¥à¤°à¤‚à¤¤ à¤†à¤à¤‚ à¤…à¤—à¤°...", "..."],
+    "redFlags": ["à¤–à¤¤à¤°à¥‡ à¤•à¤¾ à¤¸à¤‚à¤•à¥‡à¤¤ â€” à¤¤à¥à¤°à¤‚à¤¤ à¤†à¤à¤‚ à¤…à¤—à¤°..."],
     "encouragement": "à¤®à¤°à¥€à¤œ à¤•à¥‡ à¤²à¤¿à¤ à¤à¤• à¤—à¤°à¥à¤®à¤œà¥‹à¤¶à¥€ à¤­à¤°à¤¾ à¤ªà¥à¤°à¥‹à¤¤à¥à¤¸à¤¾à¤¹à¤¨ à¤µà¤¾à¤•à¥à¤¯"
-  },
-  "kannada": {
-    "mainProblem": "à²®à³à²–à³à²¯ à²¸à²®à²¸à³à²¯à³† à²¸à²°à²³ à²•à²¨à³à²¨à²¡à²¦à²²à³à²²à²¿",
-    "keyFindings": ["à²¸à²°à²³ à²¤à³€à²°à³à²®à²¾à²¨ 1", "..."],
-    "medicines": ["à²”à²·à²§à²¿ à²¹à³†à²¸à²°à³ â€” à²à²¨à³ à²®à²¾à²¡à³à²¤à³à²¤à²¦à³† à²®à²¤à³à²¤à³ à²¯à²¾à²µà²¾à²— à²¤à³†à²—à³†à²¦à³à²•à³Šà²³à³à²³à²¬à³‡à²•à³", "..."],
-    "doList": ["à²à²¨à³ à²®à²¾à²¡à²¬à³‡à²•à³ à²…à²¥à²µà²¾ à²®à²¾à²¡à²¬à²¾à²°à²¦à³", "..."],
-    "followUp": "à²®à³à²‚à²¦à²¿à²¨ à²­à³‡à²Ÿà²¿ à²¯à²¾à²µà²¾à²— à²®à²¤à³à²¤à³ à²à²•à³†",
-    "redFlags": ["à²…à²ªà²¾à²¯à²¦ à²¸à²‚à²•à³‡à²¤ â€” à²¤à²•à³à²·à²£ à²¬à²¨à³à²¨à²¿ à²…à²‚à²¦à²°à³†...", "..."],
-    "encouragement": "à²°à³‹à²—à²¿à²—à³† à²ªà³à²°à³‹à²¤à³à²¸à²¾à²¹ à²¨à³€à²¡à³à²µ à²’à²‚à²¦à³ à²¬à³†à²šà³à²šà²—à²¿à²¨ à²µà²¾à²•à³à²¯"
   }
 }`
 
-    // â”€â”€ Finance prompt â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â”€â”€ Finance prompt â€” Kannada FIRST â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const financePrompt = `You are a friendly financial advisor's assistant. Based on the consultation data below, write a simple, clear client summary that ANY person can understand â€” no finance jargon allowed.
 
 Client: ${personName || 'the client'}
@@ -11742,53 +12643,59 @@ Department: ${deptName}
 
 ${context}
 
-Return JSON only with these EXACT keys:
+IMPORTANT: You MUST generate all three languages completely. Do NOT stop early.
+Kannada is the PRIMARY language â€” generate it first and make sure it is complete.
+
+Return JSON only with these EXACT keys in this EXACT order:
 {
+  "kannada": {
+    "mainProblem": "à²®à³à²–à³à²¯ à²†à²°à³à²¥à²¿à²• à²—à³à²°à²¿ à²¸à²°à²³ à²•à²¨à³à²¨à²¡à²¦à²²à³à²²à²¿",
+    "keyFindings": ["à²¸à²°à²³ à²…à²µà²²à³‹à²•à²¨ 1"],
+    "actionItems": ["à²¯à²¾à²µ à²•à³à²°à²® à²¤à³†à²—à³†à²¦à³à²•à³Šà²³à³à²³à²¬à³‡à²•à³ â€” à²¯à²¾à²µà²¾à²—"],
+    "doList": ["à²à²¨à³ à²®à²¾à²¡à²¬à³‡à²•à³ à²…à²¥à²µà²¾ à²®à²¾à²¡à²¬à²¾à²°à²¦à³"],
+    "followUp": "à²®à³à²‚à²¦à²¿à²¨ à²­à³‡à²Ÿà²¿ à²¯à²¾à²µà²¾à²— à²®à²¤à³à²¤à³ à²à²•à³†",
+    "redFlags": ["à²†à²°à³à²¥à²¿à²• à²Žà²šà³à²šà²°à²¿à²•à³† à²¸à²‚à²•à³‡à²¤"],
+    "encouragement": "à²—à³à²°à²¾à²¹à²•à²°à²¿à²—à³† à²ªà³à²°à³‡à²°à²£à²¾à²¦à²¾à²¯à²• à²µà²¾à²•à³à²¯"
+  },
   "english": {
     "mainProblem": "1-2 simple sentences about what was discussed and what the main goal is",
-    "keyFindings": ["simple observation 1", "..."],
-    "actionItems": ["specific action to take â€” by when", "..."],
-    "doList": ["what to do or avoid financially", "..."],
+    "keyFindings": ["simple observation 1"],
+    "actionItems": ["specific action to take â€” by when"],
+    "doList": ["what to do or avoid financially"],
     "followUp": "when to meet again and why",
-    "redFlags": ["financial warning sign to watch out for", "..."],
+    "redFlags": ["financial warning sign to watch out for"],
     "encouragement": "one warm, motivating sentence for the client"
   },
   "hindi": {
     "mainProblem": "à¤®à¥à¤–à¥à¤¯ à¤µà¤¿à¤¤à¥à¤¤à¥€à¤¯ à¤²à¤•à¥à¤·à¥à¤¯ à¤¸à¤°à¤² à¤¹à¤¿à¤‚à¤¦à¥€ à¤®à¥‡à¤‚",
-    "keyFindings": ["à¤¸à¤°à¤² à¤…à¤µà¤²à¥‹à¤•à¤¨ 1", "..."],
-    "actionItems": ["à¤•à¥à¤¯à¤¾ à¤•à¤¦à¤® à¤‰à¤ à¤¾à¤à¤‚ â€” à¤•à¤¬ à¤¤à¤•", "..."],
-    "doList": ["à¤•à¥à¤¯à¤¾ à¤•à¤°à¥‡à¤‚ à¤¯à¤¾ à¤¨ à¤•à¤°à¥‡à¤‚", "..."],
+    "keyFindings": ["à¤¸à¤°à¤² à¤…à¤µà¤²à¥‹à¤•à¤¨ 1"],
+    "actionItems": ["à¤•à¥à¤¯à¤¾ à¤•à¤¦à¤® à¤‰à¤ à¤¾à¤à¤‚ â€” à¤•à¤¬ à¤¤à¤•"],
+    "doList": ["à¤•à¥à¤¯à¤¾ à¤•à¤°à¥‡à¤‚ à¤¯à¤¾ à¤¨ à¤•à¤°à¥‡à¤‚"],
     "followUp": "à¤…à¤—à¤²à¥€ à¤®à¥à¤²à¤¾à¤•à¤¾à¤¤ à¤•à¤¬ à¤”à¤° à¤•à¥à¤¯à¥‹à¤‚",
-    "redFlags": ["à¤µà¤¿à¤¤à¥à¤¤à¥€à¤¯ à¤šà¥‡à¤¤à¤¾à¤µà¤¨à¥€ à¤¸à¤‚à¤•à¥‡à¤¤", "..."],
+    "redFlags": ["à¤µà¤¿à¤¤à¥à¤¤à¥€à¤¯ à¤šà¥‡à¤¤à¤¾à¤µà¤¨à¥€ à¤¸à¤‚à¤•à¥‡à¤¤"],
     "encouragement": "à¤—à¥à¤°à¤¾à¤¹à¤• à¤•à¥‡ à¤²à¤¿à¤ à¤ªà¥à¤°à¥‡à¤°à¤£à¤¾à¤¦à¤¾à¤¯à¤• à¤µà¤¾à¤•à¥à¤¯"
-  },
-  "kannada": {
-    "mainProblem": "à²®à³à²–à³à²¯ à²†à²°à³à²¥à²¿à²• à²—à³à²°à²¿ à²¸à²°à²³ à²•à²¨à³à²¨à²¡à²¦à²²à³à²²à²¿",
-    "keyFindings": ["à²¸à²°à²³ à²…à²µà²²à³‹à²•à²¨ 1", "..."],
-    "actionItems": ["à²¯à²¾à²µ à²•à³à²°à²® à²¤à³†à²—à³†à²¦à³à²•à³Šà²³à³à²³à²¬à³‡à²•à³ â€” à²¯à²¾à²µà²¾à²—", "..."],
-    "doList": ["à²à²¨à³ à²®à²¾à²¡à²¬à³‡à²•à³ à²…à²¥à²µà²¾ à²®à²¾à²¡à²¬à²¾à²°à²¦à³", "..."],
-    "followUp": "à²®à³à²‚à²¦à²¿à²¨ à²­à³‡à²Ÿà²¿ à²¯à²¾à²µà²¾à²— à²®à²¤à³à²¤à³ à²à²•à³†",
-    "redFlags": ["à²†à²°à³à²¥à²¿à²• à²Žà²šà³à²šà²°à²¿à²•à³† à²¸à²‚à²•à³‡à²¤", "..."],
-    "encouragement": "à²—à³à²°à²¾à²¹à²•à²°à²¿à²—à³† à²ªà³à²°à³‡à²°à²£à²¾à²¦à²¾à²¯à²• à²µà²¾à²•à³à²¯"
   }
 }`
 
-    const response = await groq.chat.completions.create({
-      model: MODELS.SMART,
-      messages: [{ role: 'user', content: isHealthcare ? healthcarePrompt : financePrompt }],
-      temperature: 0.4,
-      response_format: { type: 'json_object' },
-      max_tokens: 3000,
-    })
+    // â”€â”€ Call Groq with fallback on 429 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    const response = await groqWithFallback(
+      {
+        messages: [{ role: 'user', content: isHealthcare ? healthcarePrompt : financePrompt }],
+        temperature: 0.4,
+        response_format: { type: 'json_object' },
+        max_tokens: 3000, // â† increased back: Kannada script needs more tokens than Latin
+      },
+      true
+    )
 
     let summary: any = {}
     try {
       summary = JSON.parse(response.choices[0].message.content!)
     } catch {
       summary = {
-        english: { mainProblem: 'Summary could not be generated. Please generate the full report first.', keyFindings: [], medicines: [], doList: [], followUp: 'Please consult your doctor.', redFlags: [], encouragement: 'Take care!' },
-        hindi: { mainProblem: 'à¤¸à¤¾à¤°à¤¾à¤‚à¤¶ à¤¤à¥ˆà¤¯à¤¾à¤° à¤¨à¤¹à¥€à¤‚ à¤¹à¥‹ à¤¸à¤•à¤¾à¥¤', keyFindings: [], medicines: [], doList: [], followUp: 'à¤•à¥ƒà¤ªà¤¯à¤¾ à¤¡à¥‰à¤•à¥à¤Ÿà¤° à¤¸à¥‡ à¤®à¤¿à¤²à¥‡à¤‚à¥¤', redFlags: [], encouragement: 'à¤–à¥à¤¯à¤¾à¤² à¤°à¤–à¥‡à¤‚!' },
         kannada: { mainProblem: 'à²¸à²¾à²°à²¾à²‚à²¶ à²¤à²¯à²¾à²°à²¿à²¸à²²à²¾à²—à²²à²¿à²²à³à²².', keyFindings: [], medicines: [], doList: [], followUp: 'à²¦à²¯à²µà²¿à²Ÿà³à²Ÿà³ à²µà³ˆà²¦à³à²¯à²°à²¨à³à²¨à³ à²­à³‡à²Ÿà²¿ à²®à²¾à²¡à²¿.', redFlags: [], encouragement: 'à²†à²°à³‹à²—à³à²¯à²µà²¾à²—à²¿à²°à²¿!' },
+        english: { mainProblem: 'Summary could not be generated. Please try again.', keyFindings: [], medicines: [], doList: [], followUp: 'Please consult your doctor.', redFlags: [], encouragement: 'Take care!' },
+        hindi: { mainProblem: 'à¤¸à¤¾à¤°à¤¾à¤‚à¤¶ à¤¤à¥ˆà¤¯à¤¾à¤° à¤¨à¤¹à¥€à¤‚ à¤¹à¥‹ à¤¸à¤•à¤¾à¥¤', keyFindings: [], medicines: [], doList: [], followUp: 'à¤•à¥ƒà¤ªà¤¯à¤¾ à¤¡à¥‰à¤•à¥à¤Ÿà¤° à¤¸à¥‡ à¤®à¤¿à¤²à¥‡à¤‚à¥¤', redFlags: [], encouragement: 'à¤–à¥à¤¯à¤¾à¤² à¤°à¤–à¥‡à¤‚!' },
       }
     }
 
@@ -11805,6 +12712,189 @@ Return JSON only with these EXACT keys:
   } catch (error: any) {
     console.error('Generate summary error:', error)
     return NextResponse.json({ error: 'Failed to generate summary', details: error.message }, { status: 500 })
+  }
+}
+
+===== C:\Users\Jatin\Desktop\turbos-medifi\app\api\ai\patient-summary\route.ts =====
+// app/api/ai/patient-summary/route.ts
+
+import { NextRequest, NextResponse } from 'next/server'
+import { groqWithFallback } from '@/lib/groq'
+
+export async function POST(req: NextRequest) {
+  try {
+    const { sessions, personName, domain, language } = await req.json()
+
+    if (!sessions || !Array.isArray(sessions) || sessions.length === 0) {
+      return NextResponse.json({ error: 'No session data provided' }, { status: 400 })
+    }
+
+    const isHC = domain === 'HEALTHCARE'
+    const langMap: Record<string, string> = { KANNADA: 'Kannada (à²•à²¨à³à²¨à²¡)', ENGLISH: 'English', HINDI: 'Hindi (à¤¹à¤¿à¤‚à¤¦à¥€)' }
+    const targetLang = langMap[language] || langMap.KANNADA
+
+    // Build a comprehensive context from all sessions
+    const sessionSummaries = sessions.map((s: any, i: number) => {
+      const date = new Date(s.createdAt).toLocaleDateString('en-IN', {
+        year: 'numeric', month: 'long', day: 'numeric'
+      })
+      const dept = s.department?.replace(/_/g, ' ') || 'Unknown'
+      const status = s.status || 'Unknown'
+      const approved = s.approved ? ' (Approved)' : ''
+      const hasReport = s.finalReport ? 'Yes' : 'No'
+
+      const ner = s.nerEntities || {}
+      const ed = s.extractedData || {}
+
+      let entitySection = ''
+      if (Object.keys(ner).length > 0) {
+        entitySection = '\n  Extracted Entities:'
+        Object.entries(ner).forEach(([cat, vals]) => {
+          if (Array.isArray(vals) && vals.length > 0) {
+            entitySection += `\n    ${cat}: ${vals.join(', ')}`
+          }
+        })
+      }
+
+      let dataSection = ''
+      if (Object.keys(ed).length > 0) {
+        if (ed.chiefComplaint) dataSection += `\n  Chief Complaint: ${ed.chiefComplaint}`
+        if (ed.historyOfPresentIllness) dataSection += `\n  History: ${ed.historyOfPresentIllness}`
+        if (ed.pastMedicalHistory) dataSection += `\n  Past Medical History: ${ed.pastMedicalHistory}`
+        if (ed.allergies) dataSection += `\n  Allergies: ${ed.allergies}`
+        if (ed.familyHistory) dataSection += `\n  Family History: ${ed.familyHistory}`
+        if (ed.physicalExamination) dataSection += `\n  Physical Examination: ${ed.physicalExamination}`
+        if (ed.currentMedications?.length) dataSection += `\n  Medications: ${ed.currentMedications.join(', ')}`
+        if (ed.vitals) {
+          const v = ed.vitals
+          const vitalsStr = Object.entries(v).filter(([, val]) => val && val !== 'null').map(([k, val]) => `${k}: ${val}`).join(', ')
+          if (vitalsStr) dataSection += `\n  Vitals: ${vitalsStr}`
+        }
+        // Finance-specific
+        if (ed.clientGoals?.length) dataSection += `\n  Client Goals: ${ed.clientGoals.join('; ')}`
+        if (ed.riskProfile) dataSection += `\n  Risk Profile: ${ed.riskProfile}`
+        if (ed.summary) dataSection += `\n  Summary: ${ed.summary}`
+      }
+
+      // Include snippet of final report if exists (first 600 chars text only)
+      let reportSnippet = ''
+      if (s.finalReport) {
+        const textOnly = s.finalReport.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+        reportSnippet = `\n  Report Excerpt: ${textOnly.slice(0, 600)}...`
+      }
+
+      return `--- Visit ${i + 1}: ${date} ---
+  Department: ${dept}
+  Status: ${status}${approved}
+  Report Generated: ${hasReport}${dataSection}${entitySection}${reportSnippet}`
+    }).join('\n\n')
+
+    const prompt = isHC
+      ? `You are a senior physician reviewing the complete medical history of a patient.
+
+Patient Name: ${personName || 'Unknown'}
+Total Visits: ${sessions.length}
+Domain: Healthcare
+
+=== ALL VISIT DATA ===
+${sessionSummaries}
+=== END ===
+
+Based on ALL the visit data above, write a comprehensive patient health summary in clean HTML.
+
+Structure your response with these sections:
+<h3>ðŸ“‹ Patient Profile Summary</h3>
+<p>Brief overview of the patient â€” age, conditions, visit frequency, departments visited.</p>
+
+<h3>ðŸ”„ Recurring Patterns</h3>
+<p>Symptoms or conditions that appeared across multiple visits. Flag any chronic or worsening patterns.</p>
+
+<h3>ðŸ’Š Medication History</h3>
+<p>All medications prescribed across visits. Note any changes, additions, or discontinuations over time.</p>
+
+<h3>ðŸ“ˆ Health Trajectory</h3>
+<p>How is the patient's health trending? Improving, stable, or deteriorating? Base this on symptoms and visit patterns.</p>
+
+<h3>âš ï¸ Risk Factors & Alerts</h3>
+<p>Any concerns â€” recurring symptoms that weren't resolved, drug interactions, gaps in follow-up, or red flags.</p>
+
+<h3>ðŸŽ¯ Recommended Actions</h3>
+<ul><li>Specific, actionable next steps for the treating physician</li></ul>
+
+Rules:
+- Write clean HTML only. No markdown. No backticks.
+- Base EVERYTHING on the actual data provided. Do not invent symptoms or diagnoses.
+- If data is sparse, say so honestly.
+- Be specific â€” reference actual dates, medications, and symptoms from the visits.
+- Use <p>, <ul>, <li>, <strong> tags. Keep it professional and clinically useful.
+
+CRITICAL LANGUAGE RULE: Write ALL text content (inside <p>, <li>, <strong> tags) in ${targetLang}. 
+The <h3> section headings with emojis must stay in English for CSS matching, but ALL paragraph and list content MUST be in ${targetLang}.
+Use proper ${targetLang} medical/clinical terminology. If the language is Kannada or Hindi, transliterate drug names but describe everything else natively.`
+
+      : `You are a senior financial advisor reviewing the complete consultation history of a client.
+
+Client Name: ${personName || 'Unknown'}
+Total Consultations: ${sessions.length}
+Domain: Finance
+
+=== ALL CONSULTATION DATA ===
+${sessionSummaries}
+=== END ===
+
+Based on ALL the consultation data above, write a comprehensive client financial summary in clean HTML.
+
+Structure your response with these sections:
+<h3>ðŸ“‹ Client Profile Summary</h3>
+<p>Brief overview â€” financial goals, risk profile, consultation frequency.</p>
+
+<h3>ðŸ”„ Recurring Themes</h3>
+<p>Topics or concerns that appeared across multiple consultations.</p>
+
+<h3>ðŸ’° Investment & Portfolio History</h3>
+<p>All financial instruments, investments, and strategies discussed across sessions.</p>
+
+<h3>ðŸ“ˆ Financial Trajectory</h3>
+<p>How is the client's financial health trending? Are goals being met?</p>
+
+<h3>âš ï¸ Risk Factors & Alerts</h3>
+<p>Tax deadlines, overexposure, insurance gaps, or underperforming areas.</p>
+
+<h3>ðŸŽ¯ Recommended Actions</h3>
+<ul><li>Specific next steps for the advisor</li></ul>
+
+Rules:
+- Write clean HTML only. No markdown. No backticks.
+- Base EVERYTHING on actual data. Do not invent numbers.
+- Be specific â€” reference actual dates, amounts, and strategies.
+
+CRITICAL LANGUAGE RULE: Write ALL text content (inside <p>, <li>, <strong> tags) in ${targetLang}.
+The <h3> section headings with emojis must stay in English for CSS matching, but ALL paragraph and list content MUST be in ${targetLang}.
+Use proper ${targetLang} financial terminology.`
+
+    const response = await groqWithFallback({
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.4,
+      max_tokens: 3000,
+    }) as any
+
+    let summary = (response.choices?.[0]?.message?.content || '') as string
+    summary = summary.replace(/```html/gi, '').replace(/```/g, '').trim()
+
+    return NextResponse.json({ summary })
+
+  } catch (error: any) {
+    console.error('Patient summary error:', error)
+    if (error?.status === 429) {
+      return NextResponse.json(
+        { error: 'Rate limited â€” please try again in a moment' },
+        { status: 429 }
+      )
+    }
+    return NextResponse.json(
+      { error: 'Failed to generate summary' },
+      { status: 500 }
+    )
   }
 }
 
@@ -13012,7 +14102,10 @@ export async function GET(
             department: true,
             status: true,
             approved: true,
-            createdAt: true
+            createdAt: true,
+            nerEntities: true,
+            extractedData: true,
+            finalReport: true,
           }
         }
       }
@@ -13064,7 +14157,7 @@ export async function POST(req: NextRequest) {
     const userId = payload.userId
 
     // âœ… Get request body
-    const { personId, domain, department, language } = await req.json()
+    const { personId, domain, department, language, sessionMode } = await req.json()
 
     // âœ… Validate required fields
     if (!personId || !domain) {
@@ -13104,6 +14197,7 @@ export async function POST(req: NextRequest) {
         domain,
         department: finalDepartment,
         language: language || 'ENGLISH',
+        sessionMode: sessionMode || 'MULTI',
         status: 'ACTIVE'
       },
       include: {
@@ -14088,6 +15182,135 @@ export async function POST(req: NextRequest) {
 
   } catch (error: any) {
     console.error('Transcribe route exception:', error)
+    return NextResponse.json({ error: error.message || 'Transcription failed' }, { status: 500 })
+  }
+}
+
+===== C:\Users\Jatin\Desktop\turbos-medifi\app\api\voice\transcribe-detect\route.ts =====
+// app/api/voice/transcribe-detect/route.ts
+// Auto-detect language from audio using Sarvam saarika:v2.5
+
+import { NextRequest, NextResponse } from 'next/server'
+
+const SARVAM_BASE_URL = 'https://api.sarvam.ai'
+
+export async function POST(req: NextRequest) {
+  try {
+    const formData = await req.formData()
+    const audioBlob = formData.get('audio') as Blob
+    const language = formData.get('language') as string | null
+
+    if (!audioBlob) {
+      return NextResponse.json({ error: 'Audio file required' }, { status: 400 })
+    }
+
+    const apiKey = process.env.SARVAM_API_KEY
+    if (!apiKey) {
+      return NextResponse.json({ error: 'SARVAM_API_KEY not set' }, { status: 500 })
+    }
+
+    // If a specific language is provided, use it; otherwise use 'unknown' for auto-detect
+    const langCodeMap: Record<string, string> = {
+      'ENGLISH': 'en-IN',
+      'HINDI': 'hi-IN',
+      'KANNADA': 'kn-IN'
+    }
+    const langCode = language && langCodeMap[language] ? langCodeMap[language] : 'unknown'
+
+    const sarvamForm = new FormData()
+    sarvamForm.append('file', audioBlob, 'audio.webm')
+    sarvamForm.append('language_code', langCode)
+    sarvamForm.append('model', 'saarika:v2.5')
+    sarvamForm.append('with_timestamps', 'false')
+    sarvamForm.append('with_disfluencies', 'false')
+
+    console.log(`STT (detect) â†’ saarika:v2.5 | lang=${langCode}`)
+
+    const response = await fetch(`${SARVAM_BASE_URL}/speech-to-text`, {
+      method: 'POST',
+      headers: {
+        'api-subscription-key': apiKey
+      },
+      body: sarvamForm
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error(`Sarvam STT-detect error ${response.status}:`, errorText)
+      
+      // If 'unknown' fails, fall back to 'en-IN'
+      if (langCode === 'unknown') {
+        console.log('Auto-detect failed, falling back to en-IN...')
+        const fallbackForm = new FormData()
+        fallbackForm.append('file', audioBlob, 'audio.webm')
+        fallbackForm.append('language_code', 'en-IN')
+        fallbackForm.append('model', 'saarika:v2.5')
+        fallbackForm.append('with_timestamps', 'false')
+        fallbackForm.append('with_disfluencies', 'false')
+
+        const fbRes = await fetch(`${SARVAM_BASE_URL}/speech-to-text`, {
+          method: 'POST',
+          headers: { 'api-subscription-key': apiKey },
+          body: fallbackForm
+        })
+
+        if (fbRes.ok) {
+          const fbData = await fbRes.json()
+          return NextResponse.json({
+            transcript: fbData.transcript || '',
+            detectedLanguage: 'ENGLISH',
+            languageCode: 'en-IN',
+            autoDetected: false
+          })
+        }
+      }
+
+      return NextResponse.json(
+        { error: `Transcription failed (${response.status}): ${errorText}` },
+        { status: response.status }
+      )
+    }
+
+    const data = await response.json()
+    const transcript = data.transcript || ''
+
+    // Determine which language was detected
+    let detectedLanguage = 'ENGLISH'
+    let detectedLangCode = 'en-IN'
+
+    if (language && langCodeMap[language]) {
+      // User chose a specific language
+      detectedLanguage = language
+      detectedLangCode = langCodeMap[language]
+    } else if (data.language_code) {
+      // Sarvam returned detected lang
+      detectedLangCode = data.language_code
+      const reverseMap: Record<string, string> = {
+        'en-IN': 'ENGLISH', 'hi-IN': 'HINDI', 'kn-IN': 'KANNADA'
+      }
+      detectedLanguage = reverseMap[data.language_code] || 'ENGLISH'
+    } else {
+      // Heuristic: check script to guess language from transcript text
+      if (/[\u0C80-\u0CFF]/.test(transcript)) {
+        detectedLanguage = 'KANNADA'
+        detectedLangCode = 'kn-IN'
+      } else if (/[\u0900-\u097F]/.test(transcript)) {
+        detectedLanguage = 'HINDI'
+        detectedLangCode = 'hi-IN'
+      }
+    }
+
+    console.log(`STT-detect result: lang=${detectedLanguage} | "${transcript.substring(0, 80)}..."`)
+
+    return NextResponse.json({
+      transcript,
+      detectedLanguage,
+      languageCode: detectedLangCode,
+      autoDetected: !language
+    })
+
+  } catch (error: any) {
+    console.error('Transcribe-detect route exception:', error)
     return NextResponse.json({ error: error.message || 'Transcription failed' }, { status: 500 })
   }
 }

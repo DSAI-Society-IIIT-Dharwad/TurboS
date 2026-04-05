@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     const userId = payload.userId
 
     // ✅ Get request body
-    const { personId, domain, department, language } = await req.json()
+    const { personId, domain, department, language, sessionMode } = await req.json()
 
     // ✅ Validate required fields
     if (!personId || !domain) {
@@ -69,6 +69,7 @@ export async function POST(req: NextRequest) {
         domain,
         department: finalDepartment,
         language: language || 'ENGLISH',
+        sessionMode: sessionMode || 'MULTI',
         status: 'ACTIVE'
       },
       include: {

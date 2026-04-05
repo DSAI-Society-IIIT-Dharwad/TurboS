@@ -49,6 +49,11 @@ enum SessionStatus {
   ARCHIVED
 }
 
+enum SessionMode {
+  SINGLE
+  MULTI
+}
+
 enum AuditAction {
   LOGIN
   LOGOUT
@@ -100,6 +105,7 @@ model Session {
   department     Department
   language       Language      @default(ENGLISH)
   status         SessionStatus @default(ACTIVE)
+  sessionMode    SessionMode   @default(MULTI)
   transcript     String?       @db.Text
   translatedText String?       @db.Text
   extractedData  Json?

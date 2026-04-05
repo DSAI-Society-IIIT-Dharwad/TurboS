@@ -4,7 +4,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import {
   FileText, Download, Check, Send, Sparkles, User, Stethoscope,
   Loader2, Mic, MicOff, Volume2, ChevronRight,
@@ -345,6 +345,7 @@ function VisualReportEditor({
 // ─── Main Component ────────────────────────────────────────────────────────────
 export default function SessionPage() {
   const params    = useParams()
+  const router    = useRouter()
   const sessionId = params.id as string
 
   // ── Core state ──────────────────────────────────────────────────────────────
@@ -466,6 +467,11 @@ export default function SessionPage() {
     try {
       const res  = await fetch(`/api/session/${sessionId}`)
       const data = await res.json()
+      // Redirect SINGLE mode sessions to the single-language page
+      if (data.sessionMode === 'SINGLE') {
+        router.replace(`/session/${data.id}/single`)
+        return
+      }
       setSession(data)
       if (data.interactions?.length > 0) {
         setMessages(data.interactions.map((i: any) => ({
